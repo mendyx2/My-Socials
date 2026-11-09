@@ -8,6 +8,7 @@ _Update this whenever something changes. Put dated news (new client, launch, awa
 - **Roles:** Website / frontend developer · Flutter (cross-platform mobile) developer · AI automation & integrations developer
 - **One-line promise (from banner):** I build fast, beautiful and intelligent digital solutions that help businesses grow and operate smarter.
 - **Tagline:** Code. Automate. Elevate.
+- **Ideal clients:** small businesses and startups.
 - **Primary goal of profiles:** visitors **book a call**.
 - **Booking link:** _TODO: add (e.g. Cal.com / Calendly / Google Calendar booking page, all with free plans; check each)_
 
@@ -19,7 +20,7 @@ _Update this whenever something changes. Put dated news (new client, launch, awa
 | AI automation & integrations | Automations that save time, reduce manual work and scale the business |
 
 ## TODO: details the tool needs to write good content
-- [ ] **Ideal client:** who exactly? (e.g. small business owners, startups, agencies, a specific industry; which countries/time zones)
+- [x] **Ideal client:** small businesses and startups. _(Optional later: specific industries / countries.)_
 - [ ] **Location / time zone** (for booking and local relevance)
 - [ ] **Years of experience** and background story (how I got into this)
 - [ ] **3–5 projects/case studies** with results in numbers (time saved, conversion up, app rating, etc.)

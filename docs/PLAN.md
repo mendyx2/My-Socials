@@ -224,7 +224,7 @@ The tool writes and audits my profiles from the knowledge base. **I paste the re
 
 ## 7. Open decisions for me
 
-1. ~~Niche and pillars~~ **Decided:** web/frontend, Flutter/mobile, AI automation (see `profile/about.md`, `profile/pillars.md`). Still open: **who the ideal client is.**
+1. ~~Niche and pillars~~ **Decided:** web/frontend, Flutter/mobile, AI automation (see `profile/about.md`, `profile/pillars.md`). Ideal clients: **small businesses and startups.**
 2. Do I want auto-publishing at all, or just ideas + drafts?
 3. Is my Instagram already Creator/Business? (Required for the API.)
 4. Private or public repo? (Public = unlimited Actions minutes but **exposes personal info**; private is recommended.)

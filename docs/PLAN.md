@@ -224,12 +224,12 @@ The tool writes and audits my profiles from the knowledge base. **I paste the re
 
 ## 7. Open decisions for me
 
-1. My industry/niche and 3–5 content pillars.
+1. ~~Niche and pillars~~ **Decided:** web/frontend, Flutter/mobile, AI automation (see `profile/about.md`, `profile/pillars.md`). Still open: **who the ideal client is.**
 2. Do I want auto-publishing at all, or just ideas + drafts?
 3. Is my Instagram already Creator/Business? (Required for the API.)
 4. Private or public repo? (Public = unlimited Actions minutes but **exposes personal info**; private is recommended.)
 5. Local-only vs. GitHub Actions automation.
 6. ~~Video: A, B or C?~~ **Decided: A. Video ideas and scripts are in the tool; editing isn't.** Still open: typical video length (30/60/90 s), and whether I'm comfortable with face-to-camera or prefer voiceover/screen recordings.
 7. If posting Reels via API: switch Instagram to a **Business** account (safer than Creator for API publishing).
-8. **Brand look for carousels**: 2–3 colors, 1–2 fonts, and whether my photo appears on slides. (Or build templates myself vs. use Canva free.)
-9. **Profile goal**: what should a visitor do? (Hire me, follow, book a call, join a newsletter?) This drives every bio and CTA.
+8. ~~Brand look~~ **Taken from my banner** (see `profile/brand.md`). Still open: build templates vs. Canva free.
+9. ~~Profile goal~~ **Decided: book a call.** Still open: which free booking tool.

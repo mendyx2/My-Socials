@@ -1,0 +1,42 @@
+{
+  "maxAgeHours": 72,
+  "maxItemsPerFeed": 20,
+  "pillars": {
+    "web": {
+      "label": "Web & frontend",
+      "keywords": ["web", "frontend", "front-end", "css", "javascript", "typescript", "react", "next.js", "nextjs", "seo", "performance", "core web vitals", "accessibility", "website", "browser", "ui", "ux"]
+    },
+    "flutter": {
+      "label": "Flutter & mobile",
+      "keywords": ["flutter", "dart", "mobile", "ios", "android", "app store", "play store", "cross-platform", "mobile app"]
+    },
+    "ai-automation": {
+      "label": "AI automation for businesses",
+      "keywords": ["ai", "automation", "automate", "agent", "agents", "llm", "gpt", "claude", "gemini", "openai", "anthropic", "n8n", "zapier", "make.com", "workflow", "chatbot", "integration", "api"]
+    },
+    "proof": {
+      "label": "Proof & process",
+      "keywords": ["case study", "client", "freelance", "startup", "small business", "smb", "founder", "productivity", "cost", "roi"]
+    },
+    "personal": {
+      "label": "Personal journey",
+      "keywords": ["career", "developer", "hiring", "remote", "women in tech", "learning"]
+    }
+  },
+  "feeds": [
+    { "name": "web.dev", "url": "https://web.dev/feed.xml", "pillar": "web" },
+    { "name": "Smashing Magazine", "url": "https://www.smashingmagazine.com/feed/", "pillar": "web" },
+    { "name": "CSS-Tricks", "url": "https://css-tricks.com/feed/", "pillar": "web" },
+    { "name": "Next.js blog", "url": "https://nextjs.org/feed.xml", "pillar": "web" },
+    { "name": "Flutter blog", "url": "https://medium.com/feed/flutter", "pillar": "flutter" },
+    { "name": "Dart blog", "url": "https://medium.com/feed/dartlang", "pillar": "flutter" },
+    { "name": "Google News: Flutter", "url": "https://news.google.com/rss/search?q=flutter+app&hl=en-US&gl=US&ceid=US:en", "pillar": "flutter" },
+    { "name": "Google News: AI for small business", "url": "https://news.google.com/rss/search?q=%22small+business%22+AI+automation&hl=en-US&gl=US&ceid=US:en", "pillar": "ai-automation" },
+    { "name": "Google News: AI agents startups", "url": "https://news.google.com/rss/search?q=AI+agents+startups&hl=en-US&gl=US&ceid=US:en", "pillar": "ai-automation" },
+    { "name": "n8n blog", "url": "https://blog.n8n.io/rss/", "pillar": "ai-automation" },
+    { "name": "OpenAI news", "url": "https://openai.com/news/rss.xml", "pillar": "ai-automation" },
+    { "name": "Google AI blog", "url": "https://blog.google/technology/ai/rss/", "pillar": "ai-automation" },
+    { "name": "Hacker News front page", "url": "https://hnrss.org/frontpage?points=100", "pillar": "ai-automation" },
+    { "name": "Google News: startups", "url": "https://news.google.com/rss/search?q=startup+tech+founders&hl=en-US&gl=US&ceid=US:en", "pillar": "proof" }
+  ]
+}

@@ -118,6 +118,42 @@ Build it, **but build the idea/draft engine first and treat auto-publishing as o
 
 ---
 
+## 5b. Video (added later, still undecided)
+
+I'll record videos and need them edited. **Open question:** is that part of the tool or not?
+
+### What "editing" splits into
+| Task | Automatable at $0? | How |
+|---|---|---|
+| Transcribe | ✅ Yes, well | **Whisper / faster-whisper**, run locally. Free and accurate. |
+| Burned-in captions | ✅ Yes | FFmpeg + the transcript (`.srt` → subtitles). |
+| Cut silences / "umms" / dead air | ✅ Mostly | **auto-editor** (open source) or FFmpeg silence detection. |
+| Reframe 16:9 → 9:16 / 1:1 / 4:5 | ✅ Yes (center crop); 🟡 face-tracking crop is harder | FFmpeg; MediaPipe for face tracking. |
+| Pick the best short clips from a long recording | 🟡 OK | Transcript → LLM picks timestamps → FFmpeg cuts. Quality varies. |
+| Post copy, hook, hashtags from the video | ✅ Yes | Transcript → existing drafter. **Fits the tool naturally.** |
+| Creative editing: B-roll, music, transitions, zooms, pacing | ❌ Not well | This is taste work. Use a free editor app. |
+
+### Free editors to compare (verify each before relying on it ⚠️)
+- **Instagram Edits** (Meta, phone): free, reportedly no watermark, 4K export; built for Reels. Some features are reportedly missing, e.g. auto silence removal.
+- **CapCut**: free plan exports 1080p clean for normal edits; Pro templates and many AI features are paywalled or watermarked. Pricing and terms keep changing.
+- **DaVinci Resolve (free)**: professional desktop editor with no watermark. Steep learning curve, needs a decent computer.
+
+### Options
+- **A. Keep video out of the tool.** Record → edit in Edits/CapCut → post. Zero build cost. The tool only writes the script/hook beforehand.
+- **B. Thin "video prep" step in the tool (recommended).** Runs **locally**: transcribe → remove silences → captions → reframe → generate caption/post copy. Finish creative edits in a free app if needed.
+- **C. Full automated editor in the tool.** Not recommended: most effort, worst results, and free apps already do it better.
+
+### Recommendation
+**B, but later (after Phase 2).** Meanwhile, the tool should already help *before* recording: turn an idea into a short script with hook, 3 points, and CTA. That's cheap to build and useful whatever you decide about editing.
+
+### $0 constraints specific to video
+- **Process on your own computer, not GitHub Actions/the repo.** Video files are large (GitHub blocks files >100 MB; free LFS storage is small). Keep raw footage on your disk or a free cloud drive.
+- **Instagram Reels by API** needs the video at a **public URL** and, per Meta's docs, possibly a **Business** account (one source says Creator isn't supported for API Reels ⚠️). Specs are roughly 9:16, MP4/H.264, a few seconds up to ~90 s for Reels. Free public hosting for large video files is the awkward part, so **posting videos manually may be simpler.**
+- **LinkedIn video** upload via API exists, but I haven't confirmed it's available to personal apps ⚠️. Manual upload is the fallback.
+- Whisper and FFmpeg run fine on a CPU, just slower. A 10-min video takes a few minutes on a normal laptop.
+
+---
+
 ## 6. Risks & mitigations
 
 | Risk | Likelihood | Mitigation |
@@ -139,3 +175,5 @@ Build it, **but build the idea/draft engine first and treat auto-publishing as o
 3. Is my Instagram already Creator/Business? (Required for the API.)
 4. Private or public repo? (Public = unlimited Actions minutes but **exposes personal info**; private is recommended.)
 5. Local-only vs. GitHub Actions automation.
+6. Video: A (outside the tool), B (local prep step), or C (full editor)? And where will I record: phone or camera/desktop? Long videos cut into clips, or short ones only?
+7. If posting Reels via API: switch Instagram to a **Business** account (safer than Creator for API publishing).

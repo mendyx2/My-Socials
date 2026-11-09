@@ -233,3 +233,4 @@ The tool writes and audits my profiles from the knowledge base. **I paste the re
 7. If posting Reels via API: switch Instagram to a **Business** account (safer than Creator for API publishing).
 8. ~~Brand look~~ **Taken from my banner** (see `profile/brand.md`). Still open: build templates vs. Canva free.
 9. ~~Profile goal~~ **Decided: book a call.** Still open: which free booking tool.
+10. **Also open to freelance, contract and full-time roles.** LinkedIn must serve clients *and* recruiters. Still open: "Open to work" recruiters-only or public, and whether to add job-lead and CV features.

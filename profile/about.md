@@ -9,7 +9,11 @@ _Update this whenever something changes. Put dated news (new client, launch, awa
 - **One-line promise (from banner):** I build fast, beautiful and intelligent digital solutions that help businesses grow and operate smarter.
 - **Tagline:** Code. Automate. Elevate.
 - **Ideal clients:** small businesses and startups.
-- **Primary goal of profiles:** visitors **book a call**.
+- **Also open to:** freelance, contract, and full-time roles.
+- **Two audiences:**
+  1. **Clients** (small business owners, startup founders) → goal: **book a call**
+  2. **Hiring managers / recruiters** → goal: **contact me / book a call / view portfolio**
+- **Primary goal of profiles:** visitors **book a call** (works for both audiences).
 - **Booking link:** _TODO: add (e.g. Cal.com / Calendly / Google Calendar booking page, all with free plans; check each)_
 
 ## Services

@@ -1,6 +1,6 @@
 # My-Socials: Feature spec (v1)
 
-One user (Wendy / OI.Dev) · LinkedIn + Instagram · ideal clients: small businesses and startups · goal: **book a call** · **$0 running cost**.
+One user (Wendy / OI.Dev) · LinkedIn + Instagram · ideal clients: small businesses and startups · goal: **book a call** · also open to **freelance, contract and full-time roles** · **$0 running cost**.
 Details and reasoning: see `PLAN.md`.
 
 ## 1. Knowledge base
@@ -24,6 +24,9 @@ Details and reasoning: see `PLAN.md`.
 - LinkedIn: headline, About, experience bullets, Featured picks, skills, banner (rendered, 1584×396).
 - Instagram: bio, name field, link-in-bio plan, highlight names + covers.
 - Audit: consistency across both platforms, outdated info, missing keywords, CTA present.
+- **Two audiences:** clients (outcomes, results, "book a call") and recruiters/hiring managers (searchable job titles, skills, tech stack, experience). LinkedIn serves both; Instagram stays client-focused.
+- Recruiter search optimisation: job-title keywords in headline and experience, skills list matched to the roles I want.
+- Reminder checklist for LinkedIn's "Open to work" setting (recruiters-only vs public; see PLAN.md).
 - Version history of bios. **Applied by copy-paste** (no API exists for profile edits).
 
 ## 5. Planning & publishing
@@ -41,4 +44,6 @@ Details and reasoning: see `PLAN.md`.
 ## Possible later additions (not committed)
 - Engagement help: suggested replies to comments, and suggested comments on other people's posts.
 - Local "video prep" step (captions/silence cut).
-- Lead tracking: who booked a call and which post they came from.
+- Lead tracking: who booked a call and which post they came from (clients **and** recruiters).
+- Job leads: free job feeds (e.g. remote job board RSS/APIs, "Who is hiring" threads) filtered for Flutter / frontend / AI automation roles. LinkedIn job listings have no free API, so no LinkedIn job scraping.
+- CV / cover letter tailoring per role from the knowledge base.

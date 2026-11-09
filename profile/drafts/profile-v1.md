@@ -24,7 +24,24 @@ The current full design still works well as a **portfolio website hero**, a **Fa
 
 ---
 
-## LinkedIn headline options (limit 220)
+## Update: also open to freelance, contract & full-time roles
+
+LinkedIn now has two audiences: **clients** and **recruiters/hiring managers**. Recruiters search by job title and skills, so the headline must contain the exact titles ("Frontend Developer", "Flutter Developer") and the stack, not only client outcomes.
+
+Revised headline options (preferred):
+- A. Frontend, Flutter & AI Automation Developer | I help startups & small businesses ship fast web & mobile apps and automate busywork | Open to freelance, contract & full-time _(172)_
+- B. Frontend & Flutter Developer | AI Automation | [main stack, e.g. React • Next.js • Flutter • Dart] | Building for startups & small businesses | Open to freelance, contract & full-time roles _(~170)_
+
+About section: add one line before the CTA:
+> **Open to:** freelance projects, contract work and full-time roles (remote / [location]). Whether you need a project built or a developer on your team, let's talk.
+
+**"Open to work" setting (honest trade-off) ⚠️:**
+- **Recruiters only:** invisible to clients, so it doesn't signal "looking for work" to people you're pitching. LinkedIn says it can't guarantee people at your current company won't see it. Best fit here.
+- **Public (#OpenToWork frame):** more inbound from recruiters, but some clients read it as "not in demand", which can hurt freelance pricing.
+
+Instagram stays client-focused. No job-seeking message needed there.
+
+## Original LinkedIn headline options (client-only, superseded) (limit 220)
 1. Website, Flutter & AI Automation Developer | I build fast web & mobile apps and automations that save businesses time | Book a free call 👇 _(138)_
 2. I help businesses grow with fast websites, Flutter mobile apps & AI automations | Frontend • Flutter • AI Automation | Founder, OI.Dev _(134)_
 3. Frontend & Flutter Developer + AI Automation | Turning manual work into automated workflows and ideas into web & mobile apps | Book a call _(138)_

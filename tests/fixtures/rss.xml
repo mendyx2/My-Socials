@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel><title>Test feed</title>
+<item><title>Small businesses adopt AI automation to cut admin time</title><link>https://example.com/ai-smb?utm_source=rss</link><pubDate>Sun, 08 Nov 2026 10:00:00 GMT</pubDate><description><![CDATA[<p>Owners say <b>automation</b> saves 5 hours a week.</p>]]></description></item>
+<item><title>Flutter 4 released with faster rendering</title><link>https://example.com/flutter-4</link><pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate><description>Flutter mobile apps get faster.</description></item>
+<item><title>Old news about CSS</title><link>https://example.com/old-css</link><pubDate>Mon, 01 Jan 2024 12:00:00 GMT</pubDate><description>css</description></item>
+<item><title>Celebrity gossip roundup</title><link>https://example.com/gossip</link><pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate><description>Nothing relevant here, said the reporter.</description></item>
+</channel></rss>

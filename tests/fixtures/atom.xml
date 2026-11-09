@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Atom test</title>
+<entry><title>Small businesses adopt AI automation to cut admin time - Example News</title><link href="https://www.example.com/ai-smb"/><updated>2026-11-08T11:00:00Z</updated><summary>Duplicate of the RSS story.</summary></entry>
+<entry><title>Core Web Vitals update for website SEO</title><link href="https://example.org/cwv"/><updated>2026-11-08T09:00:00Z</updated><summary>Performance and SEO changes for every website.</summary></entry>
+</feed>

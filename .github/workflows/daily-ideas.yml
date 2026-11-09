@@ -1,0 +1,59 @@
+name: Daily content ideas
+
+on:
+  schedule:
+    # 05:17 UTC every day. Change to suit your time zone (cron is always UTC here).
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+    inputs:
+      count:
+        description: "How many ideas"
+        required: false
+        default: "5"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-ideas
+  cancel-in-progress: false
+
+jobs:
+  ideas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Generate ideas
+        env:
+          LLM_PROVIDERS: ${{ vars.LLM_PROVIDERS || 'gemini,groq' }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-flash-latest' }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_MODEL: ${{ vars.GROQ_MODEL || 'openai/gpt-oss-120b' }}
+          IDEAS_PER_DAY: ${{ inputs.count || vars.IDEAS_PER_DAY || '5' }}
+        run: npm run ideas
+
+      - name: Commit ideas and digest
+        run: |
+          git config user.name "my-socials-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data digests
+          if git diff --cached --quiet; then
+            echo "Nothing new to commit."
+            exit 0
+          fi
+          git commit -m "Daily ideas $(date -u +%F)"
+          for i in 1 2 3; do
+            git pull --rebase && git push && exit 0
+            sleep $((i * 5))
+          done
+          exit 1

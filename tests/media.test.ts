@@ -3,11 +3,12 @@ import { existsSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { MediaStore, sniffImage } from "@/src/lib/media/store";
+import { FileStorage } from "@/src/lib/storage";
 
 // Smallest valid 1x1 PNG.
 export const PNG = Uint8Array.from(Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64"));
 const JPG = Uint8Array.from([0xff, 0xd8, 0xff, 0xe0, 0, 0x10]);
-const store = () => new MediaStore(mkdtempSync(path.join(tmpdir(), "media-")));
+const store = () => new MediaStore(new FileStorage(mkdtempSync(path.join(tmpdir(), "media-"))));
 
 describe("media store", () => {
   it("detects real image types from bytes, not names", () => {
@@ -29,9 +30,9 @@ describe("media store", () => {
     const s = store();
     await expect(s.add({ data: new TextEncoder().encode("hello"), originalName: "evil.png" })).rejects.toThrow(/isn't a PNG/);
     await expect(s.add({ data: new Uint8Array(), originalName: "x.png" })).rejects.toThrow(/empty/);
-    const big = new Uint8Array(10 * 1024 * 1024 + 1);
+    const big = new Uint8Array(5 * 1024 * 1024 + 1);
     big.set(PNG);
-    await expect(s.add({ data: big, originalName: "big.png" })).rejects.toThrow(/over 10 MB/);
+    await expect(s.add({ data: big, originalName: "big.png" })).rejects.toThrow(/over 5 MB/);
   });
 
   it("keeps storyboard frames ordered, unique and pointing at real images", async () => {
@@ -50,13 +51,13 @@ describe("media store", () => {
 
   it("deleting an image removes its file and its storyboard frames", async () => {
     const dir = mkdtempSync(path.join(tmpdir(), "media-"));
-    const s = new MediaStore(dir);
+    const s = new MediaStore(new FileStorage(dir));
     const a = await s.add({ data: PNG, originalName: "a.png" });
     const board = await s.addBoard("B");
     await s.updateBoard(board.id, { itemIds: [a.id] });
     await s.remove(a.id);
     expect((await s.read()).boards[0].itemIds).toEqual([]);
-    expect(existsSync(path.join(dir, "files", a.file))).toBe(false);
+    expect(existsSync(path.join(dir, "media", "files", a.file))).toBe(false);
     await expect(s.get(a.id)).rejects.toThrow(/not found/);
   });
 

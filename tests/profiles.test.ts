@@ -11,6 +11,7 @@ import {
   setChecklistItem, updateProfile, writeProfiles,
 } from "@/src/lib/profiles/service";
 import { cfg } from "./fixtures/config";
+import { FileStorage } from "@/src/lib/storage";
 import { sampleProfile } from "./fixtures/profile";
 
 const now = new Date("2026-11-09T08:00:00Z");
@@ -79,11 +80,12 @@ function setup() {
   mkdirSync(path.join(dir, "profile"));
   writeFileSync(path.join(dir, "profile/about.md"), "Wendy, OI.Dev, small businesses and startups");
   const log: LlmRequest[] = [];
+  const storage = new FileStorage(dir);
   const deps = {
-    store: new ProfileStore(path.join(dir, "data")),
-    ideas: new IdeaStore(path.join(dir, "data")),
+    store: new ProfileStore(storage),
+    ideas: new IdeaStore(storage),
     providers: [fakeAi(log)],
-    profileDir: path.join(dir, "profile"),
+    storage,
     cfg,
     now,
   };

@@ -7,6 +7,7 @@ import { parseIdeas, toStoredIdeas } from "@/src/lib/ideas/generate";
 import { IdeaStore } from "@/src/lib/ideas/store";
 import { runIdeasPipeline } from "@/src/lib/pipeline";
 import { cfg } from "./fixtures/config";
+import { FileStorage } from "@/src/lib/storage";
 
 const rss = readFileSync("tests/fixtures/rss.xml", "utf8");
 const atom = readFileSync("tests/fixtures/atom.xml", "utf8");
@@ -83,7 +84,8 @@ describe("runIdeasPipeline (end to end, no network)", () => {
   it("fetches, selects, generates, stores and writes a digest", async () => {
     const dir = tempWorkspace();
     let prompt = "";
-    const store = new IdeaStore(path.join(dir, "data"));
+    const storage = new FileStorage(dir);
+    const store = new IdeaStore(storage);
     const r = await runIdeasPipeline({
       now,
       count: 5,
@@ -91,8 +93,7 @@ describe("runIdeasPipeline (end to end, no network)", () => {
       fetch: fakeFetch,
       providers: [fakeProvider("fake", (req) => (prompt = req.prompt))],
       store,
-      profileDir: path.join(dir, "profile"),
-      digestsDir: path.join(dir, "digests"),
+      storage,
     });
 
     expect(r.ideas).toHaveLength(2);
@@ -106,21 +107,22 @@ describe("runIdeasPipeline (end to end, no network)", () => {
 
     expect(await store.list()).toHaveLength(2);
     expect((await store.seenNewsIds()).size).toBe(2);
-    const digest = readFileSync(r.digestPath!, "utf8");
+    expect(r.digestPath).toBe("digests/2026-11-09.md");
+    const digest = readFileSync(path.join(dir, r.digestPath!), "utf8");
     expect(digest).toContain("# Content ideas: 2026-11-09");
     expect(digest).toContain("🖼️ Carousel");
 
     // Second run the same day: previous ideas are passed as "don't repeat", digest is appended.
-    await runIdeasPipeline({ now, count: 5, cfg, fetch: fakeFetch, providers: [fakeProvider("fake", (req) => (prompt = req.prompt))], store, profileDir: path.join(dir, "profile"), digestsDir: path.join(dir, "digests") });
+    await runIdeasPipeline({ now, count: 5, cfg, fetch: fakeFetch, providers: [fakeProvider("fake", (req) => (prompt = req.prompt))], store, storage });
     expect(prompt).toContain("- AI automation for small shops");
-    expect(readFileSync(r.digestPath!, "utf8")).toContain("# More ideas: 2026-11-09");
+    expect(readFileSync(path.join(dir, r.digestPath!), "utf8")).toContain("# More ideas: 2026-11-09");
     expect(await store.list()).toHaveLength(4);
   });
 
   it("falls back when the first provider returns unusable output", async () => {
     const dir = tempWorkspace();
     const junk: LlmProvider = { name: "junk", model: "x", generate: async () => ({ text: "sorry, I can't", provider: "junk", model: "x" }) };
-    const r = await runIdeasPipeline({ now, cfg, fetch: fakeFetch, providers: [junk, fakeProvider("backup")], store: new IdeaStore(path.join(dir, "data")), profileDir: path.join(dir, "profile"), digestsDir: null });
+    const r = await runIdeasPipeline({ now, cfg, fetch: fakeFetch, providers: [junk, fakeProvider("backup")], storage: new FileStorage(dir), writeDigest: false });
     expect(r.generatedBy).toBe("backup/test");
     expect(r.digestPath).toBeNull();
   });
@@ -129,7 +131,7 @@ describe("runIdeasPipeline (end to end, no network)", () => {
 describe("IdeaStore", () => {
   it("updates status and rejects bad input", async () => {
     const dir = tempWorkspace();
-    const store = new IdeaStore(path.join(dir, "data"));
+    const store = new IdeaStore(new FileStorage(dir));
     const { ideas } = parseIdeas({ ideas: [idea()] });
     const [s] = toStoredIdeas(ideas, [], cfg, { now, generatedBy: "x" });
     await store.add([s]);

@@ -1,15 +1,13 @@
 import { createHash, randomUUID } from "node:crypto";
-import path from "node:path";
 import { parseBannedWords } from "../drafts/checks";
 import { NotFoundError } from "../drafts/service";
 import { toStoredIdeas } from "../ideas/generate";
 import type { StoredIdea } from "../ideas/schema";
 import { IdeaStore } from "../ideas/store";
-import { readJson, withFileLock, writeJson } from "../json-file";
+import { getStorage, type Storage } from "../storage";
 import { kbToPrompt, loadKnowledgeBase, type KnowledgeBase } from "../kb";
 import { generateJsonWithFallback, providersFromEnv, type LlmProvider } from "../llm";
 import { loadFeedsConfig, type FeedsConfig } from "../news/config";
-import { DATA_DIR } from "../paths";
 import { checkProfile } from "./checks";
 import { buildProfilePrompt, buildProfileSectionPrompt, PROFILE_SYSTEM } from "./prompt";
 import { PROFILE_SECTIONS, ProfileContentSchema, type ProfileContent, type ProfileVersion } from "./schema";
@@ -34,30 +32,28 @@ function setPath<T>(obj: T, p: string, value: unknown): T {
   return { ...src, [head]: rest.length ? setPath(src[head], rest.join("."), value) : value } as T;
 }
 
+const PROFILES = "data/profiles.json";
+
 export class ProfileStore {
-  constructor(private readonly dir = DATA_DIR) {}
-  private get file() {
-    return path.join(this.dir, "profiles.json");
+  constructor(private readonly storage?: Storage) {}
+  private s() {
+    return this.storage ? Promise.resolve(this.storage) : getStorage();
   }
   async read(): Promise<ProfileFile> {
-    const data = await readJson<Partial<ProfileFile>>(this.file, {});
+    const data = await (await this.s()).getJSON<Partial<ProfileFile>>(PROFILES, {});
     return { versions: data.versions ?? [], checklist: data.checklist ?? {} };
-  }
-  async write(data: ProfileFile): Promise<void> {
-    await writeJson(this.file, data);
   }
   async get(id: string): Promise<ProfileVersion> {
     const v = (await this.read()).versions.find((x) => x.id === id);
     if (!v) throw new NotFoundError(`Profile version not found: ${id}`);
     return v;
   }
-  /** Read-modify-write under a lock, so overlapping requests can't undo each other. */
-  mutate<T>(fn: (data: ProfileFile) => T | Promise<T>): Promise<T> {
-    return withFileLock(this.file, async () => {
-      const data = await this.read();
-      const result = await fn(data);
-      await this.write(data);
-      return result;
+  /** Safe read-modify-write; overlapping requests can't undo each other. */
+  async mutate<T>(fn: (data: ProfileFile) => T | Promise<T>): Promise<T> {
+    return (await this.s()).mutateJSON<ProfileFile, T>(PROFILES, { versions: [], checklist: {} }, (data) => {
+      data.versions ??= [];
+      data.checklist ??= {};
+      return fn(data);
     });
   }
   async put(version: ProfileVersion): Promise<ProfileVersion> {
@@ -74,19 +70,20 @@ export interface ProfileDeps {
   store?: ProfileStore;
   ideas?: IdeaStore;
   providers?: LlmProvider[];
-  profileDir?: string;
+  storage?: Storage;
   cfg?: FeedsConfig;
   now?: Date;
 }
 
 async function ctx(deps: ProfileDeps) {
-  const kb = await loadKnowledgeBase(deps.profileDir);
+  const storage = deps.storage ?? (await getStorage());
+  const kb = await loadKnowledgeBase(storage);
   return {
     kb,
     kbText: kbToPrompt(kb),
     hash: kbHash(kb),
     banned: parseBannedWords(kb["voice.md"]),
-    store: deps.store ?? new ProfileStore(),
+    store: deps.store ?? new ProfileStore(storage),
     providers: deps.providers ?? providersFromEnv().providers,
     now: (deps.now ?? new Date()).toISOString(),
   };
@@ -183,7 +180,7 @@ export async function duplicateProfile(id: string, deps: ProfileDeps = {}) {
 }
 
 export async function setChecklistItem(itemId: string, done: boolean, deps: ProfileDeps = {}) {
-  const store = deps.store ?? new ProfileStore();
+  const store = deps.store ?? new ProfileStore(deps.storage);
   return store.mutate((data) => {
     data.checklist = { ...data.checklist, [itemId]: done };
     return data.checklist;
@@ -192,8 +189,8 @@ export async function setChecklistItem(itemId: string, done: boolean, deps: Prof
 
 /** Sends launch posts to the ideas board so they can be drafted like any other idea. */
 export async function addLaunchPostsToIdeas(id: string, indexes: number[] | "all", deps: ProfileDeps = {}): Promise<StoredIdea[]> {
-  const store = deps.store ?? new ProfileStore();
-  const ideas = deps.ideas ?? new IdeaStore();
+  const store = deps.store ?? new ProfileStore(deps.storage);
+  const ideas = deps.ideas ?? new IdeaStore(deps.storage);
   const v = await store.get(id);
   const posts = v.content.launchPosts.filter((_, i) => indexes === "all" || indexes.includes(i));
   if (posts.length === 0) throw new Error("No launch posts selected");

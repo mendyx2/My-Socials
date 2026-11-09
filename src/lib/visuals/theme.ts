@@ -1,7 +1,6 @@
 import { promises as fs } from "node:fs";
-import path from "node:path";
 import { z } from "zod";
-import { CONFIG_DIR } from "../paths";
+import bundledTheme from "../../../config/theme.json";
 
 const color = z.string().min(3).max(40).regex(/^(#[0-9a-fA-F]{3,8}|rgba?\([\d\s.,]+\))$/, "Use a hex or rgb(a) color");
 
@@ -29,6 +28,8 @@ export const ThemeSchema = z.object({
 
 export type Theme = z.infer<typeof ThemeSchema>;
 
-export async function loadTheme(file = path.join(CONFIG_DIR, "theme.json")): Promise<Theme> {
-  return ThemeSchema.parse(JSON.parse(await fs.readFile(/*turbopackIgnore: true*/ file, "utf8")));
+/** config/theme.json is bundled into the app (so it works when hosted). Tests can pass another file. */
+export async function loadTheme(file?: string): Promise<Theme> {
+  const raw = file ? JSON.parse(await fs.readFile(/*turbopackIgnore: true*/ file, "utf8")) : bundledTheme;
+  return ThemeSchema.parse(raw);
 }

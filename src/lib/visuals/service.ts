@@ -1,10 +1,9 @@
-import { promises as fs } from "node:fs";
-import path from "node:path";
 import { NotFoundError } from "../drafts/service";
 import { DraftStore } from "../drafts/store";
 import { MediaStore } from "../media/store";
 import { ProfileStore } from "../profiles/service";
-import { listRendered, renderCarousel, renderProfileVisuals, RENDERS_DIR, type RenderedFile } from "./render";
+import { getStorage } from "../storage";
+import { listRendered, renderCarousel, renderProfileVisuals, RENDERS_PREFIX, type RenderedFile } from "./render";
 import { loadTheme } from "./theme";
 
 export interface RenderedView extends RenderedFile {
@@ -39,31 +38,18 @@ export async function existingVisuals(kind: "drafts" | "profile", id: string): P
   return view(await listRendered(`${kind}/${id}`));
 }
 
-const TYPES: Record<string, string> = { ".png": "image/png", ".pdf": "application/pdf" };
+const TYPES: Record<string, string> = { png: "image/png", pdf: "application/pdf" };
 
-/** Reads a rendered file, refusing anything outside the renders folder. */
-export async function readRendered(parts: string[]): Promise<{ data: Buffer; type: string; name: string }> {
-  const full = path.resolve(RENDERS_DIR, ...parts);
-  if (!full.startsWith(RENDERS_DIR + path.sep)) throw new NotFoundError("Not found");
-  const type = TYPES[path.extname(full)];
-  if (!type) throw new NotFoundError("Not found");
-  try {
-    return { data: await fs.readFile(full), type, name: path.basename(full) };
-  } catch {
-    throw new NotFoundError("Not found");
-  }
-}
+/** Netlify functions can't return much more than ~6 MB, so bigger files are refused with a clear message. */
+export const MAX_RESPONSE_BYTES = 5.5 * 1024 * 1024;
 
-/** Renders a carousel fresh and packs the PNGs + PDF into one ZIP. */
-export async function carouselZip(id: string): Promise<{ data: Uint8Array; filename: string; warnings: string[] }> {
-  const { zipSync } = await import("fflate");
-  const files = await renderDraftVisuals(id);
-  const draft = (await new DraftStore().get(id))!;
-  const entries: Record<string, [Uint8Array, { level: 0 }]> = {};
-  for (const f of files) {
-    // PNG and PDF are already compressed; store them as-is.
-    entries[f.name] = [new Uint8Array(await fs.readFile(path.join(RENDERS_DIR, f.rel))), { level: 0 }];
-  }
-  const slug = draft.ideaTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50) || "carousel";
-  return { data: zipSync(entries), filename: `${slug}.zip`, warnings: files.map((f) => f.warning).filter((w): w is string => !!w) };
+/** Reads a rendered file. Only renders/… keys, only PNG or PDF. */
+export async function readRendered(parts: string[]): Promise<{ data: Uint8Array; type: string; name: string }> {
+  const rel = parts.join("/");
+  const ext = rel.split(".").pop() ?? "";
+  if (!TYPES[ext] || !/^(drafts|profile)\/[\w-]+\/[\w.-]+$/.test(rel)) throw new NotFoundError("Not found");
+  const data = await (await getStorage()).getBytes(`${RENDERS_PREFIX}/${rel}`);
+  if (!data) throw new NotFoundError("Not found");
+  if (data.byteLength > MAX_RESPONSE_BYTES) throw new Error("This file is too large to download from the hosted app. Render it on your laptop instead.");
+  return { data, type: TYPES[ext], name: rel.split("/").pop()! };
 }

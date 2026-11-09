@@ -11,6 +11,7 @@ import { DraftContentSchema, type DraftContent } from "@/src/lib/drafts/schema";
 import { draftCopyFromTranscript, draftIdea, regenerateDraftSection, NotFoundError } from "@/src/lib/drafts/service";
 import { DraftStore } from "@/src/lib/drafts/store";
 import { cfg } from "./fixtures/config";
+import { FileStorage } from "@/src/lib/storage";
 
 const now = new Date("2026-11-09T08:00:00Z");
 
@@ -146,14 +147,15 @@ async function setup(format: "text" | "video" | "carousel") {
   const dir = mkdtempSync(path.join(tmpdir(), "drafts-"));
   mkdirSync(path.join(dir, "profile"));
   writeFileSync(path.join(dir, "profile/voice.md"), '- Words I never use: "synergy"');
-  const ideas = new IdeaStore(path.join(dir, "data"));
+  const storage = new FileStorage(dir);
+  const ideas = new IdeaStore(storage);
   const { ideas: parsed } = parseIdeas({
     ideas: [{ title: "Idea", pillar: "flutter", format, platforms: ["linkedin"], hook: "Hook", angle: "Angle", outline: ["a"], whyMe: "fits me", cta: "call" }],
   });
   const [idea] = toStoredIdeas(parsed, [], cfg, { now, generatedBy: "x" });
   await ideas.add([idea]);
   const log: LlmRequest[] = [];
-  const deps = { ideas, drafts: new DraftStore(path.join(dir, "data")), providers: [fakeAi(log)], profileDir: path.join(dir, "profile"), now };
+  const deps = { ideas, drafts: new DraftStore(storage), providers: [fakeAi(log)], storage, now };
   return { idea, deps, log };
 }
 

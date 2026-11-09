@@ -12,6 +12,7 @@ import { IdeaStore } from "@/src/lib/ideas/store";
 import { DraftStore } from "@/src/lib/drafts/store";
 import { draftIdea, regenerateDraftSection } from "@/src/lib/drafts/service";
 import { cfg } from "./fixtures/config";
+import { FileStorage } from "@/src/lib/storage";
 import { PNG } from "./media.test";
 
 const img = { mime: "image/png", data: Buffer.from(PNG).toString("base64") };
@@ -61,7 +62,7 @@ describe("fallback when no model can read images", () => {
 
 describe("loadInspiration", () => {
   it("lists notes, numbers the images it sends, caps at 4, and skips deleted ones", async () => {
-    const store = new MediaStore(mkdtempSync(path.join(tmpdir(), "insp-")));
+    const store = new MediaStore(new FileStorage(mkdtempSync(path.join(tmpdir(), "insp-"))));
     const ids: string[] = [];
     for (let i = 0; i < 5; i++) ids.push((await store.add({ data: PNG, originalName: `ref${i}.png`, notes: i === 0 ? "Love the big numbers" : "" })).id);
     const r = await loadInspiration([...ids, "deleted-id"], store);
@@ -79,16 +80,17 @@ describe("rewriting a draft with inspiration attached", () => {
     const dir = mkdtempSync(path.join(tmpdir(), "insp-draft-"));
     mkdirSync(path.join(dir, "profile"));
     writeFileSync(path.join(dir, "profile/about.md"), "Wendy");
-    const media = new MediaStore(path.join(dir, "media"));
+    const storage = new FileStorage(dir);
+    const media = new MediaStore(storage);
     const ref = await media.add({ data: PNG, originalName: "competitor-carousel.png", notes: "Short punchy slides" });
-    const ideas = new IdeaStore(path.join(dir, "data"));
+    const ideas = new IdeaStore(storage);
     const { ideas: parsed } = parseIdeas({ ideas: [{ title: "Idea", pillar: "web", format: "text", platforms: ["linkedin"], hook: "Hook", angle: "Angle", outline: ["a"], whyMe: "fits me", cta: "call" }] });
     const [idea] = toStoredIdeas(parsed, [], cfg, { now: new Date(), generatedBy: "x" });
     await ideas.add([idea]);
     const log: LlmRequest[] = [];
     const text = { format: "text", linkedin: { hook: "Hook here", body: "Body", cta: "Book", hashtags: [] }, instagram: { caption: "Cap", hashtags: [] } };
     const fake: LlmProvider = { name: "fake", model: "t", generate: async (req) => (log.push(req), { text: JSON.stringify(text), provider: "fake", model: "t" }) };
-    const deps = { ideas, drafts: new DraftStore(path.join(dir, "data")), providers: [fake], profileDir: path.join(dir, "profile"), media };
+    const deps = { ideas, drafts: new DraftStore(storage), providers: [fake], storage, media };
     const { draft } = await draftIdea(idea.id, {}, deps);
     await deps.drafts.update(draft.id, { inspirationIds: [ref.id, ref.id] });
     expect((await deps.drafts.get(draft.id))!.inspirationIds).toEqual([ref.id]);

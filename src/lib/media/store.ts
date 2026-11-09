@@ -1,14 +1,16 @@
 import { randomUUID } from "node:crypto";
-import { promises as fs } from "node:fs";
-import path from "node:path";
 import { z } from "zod";
 import { NotFoundError } from "../drafts/service";
-import { readJson, withFileLock, writeJson } from "../json-file";
-import { ROOT } from "../paths";
+import { getStorage, type Storage } from "../storage";
 
-/** Images live only on this computer (media/ is not committed: it can be large and personal). */
-export const MEDIA_DIR = path.join(ROOT, "media");
-export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+/**
+ * Images are stored under media/ (files on your computer; Netlify Blobs when hosted).
+ * Hosted uploads must stay under Netlify's ~6 MB request limit, so the browser shrinks
+ * big photos before uploading; this is the hard cap.
+ */
+export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+const LIBRARY = "media/library.json";
+const fileKey = (file: string) => `media/files/${file}`;
 
 export const MEDIA_KINDS = ["inspiration", "storyboard", "photo"] as const;
 export type MediaKind = (typeof MEDIA_KINDS)[number];
@@ -72,21 +74,22 @@ export const BoardPatchSchema = z.object({
 });
 
 export class MediaStore {
-  constructor(private readonly dir = MEDIA_DIR) {}
-
-  private get libFile() {
-    return path.join(this.dir, "library.json");
-  }
-  private get filesDir() {
-    return path.join(this.dir, "files");
+  constructor(private readonly storage?: Storage) {}
+  private s() {
+    return this.storage ? Promise.resolve(this.storage) : getStorage();
   }
 
   async read(): Promise<Library> {
-    const lib = await readJson<Partial<Library>>(this.libFile, {});
+    const lib = await (await this.s()).getJSON<Partial<Library>>(LIBRARY, {});
     return { items: lib.items ?? [], boards: lib.boards ?? [] };
   }
-  private async write(lib: Library) {
-    await writeJson(this.libFile, lib);
+
+  private async mutate<R>(fn: (lib: Library) => R): Promise<R> {
+    return (await this.s()).mutateJSON<Library, R>(LIBRARY, { items: [], boards: [] }, (lib) => {
+      lib.items ??= [];
+      lib.boards ??= [];
+      return fn(lib);
+    });
   }
 
   async get(id: string): Promise<MediaItem> {
@@ -96,63 +99,56 @@ export class MediaStore {
   }
 
   async add(input: { data: Uint8Array; originalName: string; kind?: MediaKind; title?: string; notes?: string }, now = new Date()): Promise<MediaItem> {
-    return withFileLock(this.libFile, async () => {
-      if (input.data.byteLength === 0) throw new Error("The file is empty.");
-      if (input.data.byteLength > MAX_UPLOAD_BYTES) throw new Error(`"${input.originalName}" is over 10 MB.`);
-      const mime = sniffImage(input.data);
-      if (!mime) throw new Error(`"${input.originalName}" isn't a PNG, JPEG, WebP or GIF image.`);
-      const id = randomUUID();
-      const file = `${id}.${TYPES[mime]}`;
-      await fs.mkdir(this.filesDir, { recursive: true });
-      await fs.writeFile(path.join(/*turbopackIgnore: true*/ this.filesDir, file), input.data);
-      const item: MediaItem = {
-        id,
-        file,
-        mime,
-        bytes: input.data.byteLength,
-        originalName: input.originalName.slice(0, 200),
-        title: (input.title ?? input.originalName.replace(/\.[a-z0-9]+$/i, "")).slice(0, 120),
-        notes: (input.notes ?? "").slice(0, 2000),
-        kind: input.kind ?? "inspiration",
-        createdAt: now.toISOString(),
-      };
-      const lib = await this.read();
+    if (input.data.byteLength === 0) throw new Error("The file is empty.");
+    if (input.data.byteLength > MAX_UPLOAD_BYTES) throw new Error(`"${input.originalName}" is over 5 MB.`);
+    const mime = sniffImage(input.data);
+    if (!mime) throw new Error(`"${input.originalName}" isn't a PNG, JPEG, WebP or GIF image.`);
+    const id = randomUUID();
+    const file = `${id}.${TYPES[mime]}`;
+    await (await this.s()).setBytes(fileKey(file), input.data);
+    const item: MediaItem = {
+      id,
+      file,
+      mime,
+      bytes: input.data.byteLength,
+      originalName: input.originalName.slice(0, 200),
+      title: (input.title ?? input.originalName.replace(/\.[a-z0-9]+$/i, "")).slice(0, 120),
+      notes: (input.notes ?? "").slice(0, 2000),
+      kind: input.kind ?? "inspiration",
+      createdAt: now.toISOString(),
+    };
+    await this.mutate((lib) => {
       lib.items.unshift(item);
-      await this.write(lib);
-      return item;
     });
+    return item;
   }
 
   async update(id: string, patch: z.infer<typeof ItemPatchSchema>): Promise<MediaItem> {
-    return withFileLock(this.libFile, async () => {
-      const lib = await this.read();
+    const p = ItemPatchSchema.parse(patch);
+    return this.mutate((lib) => {
       const i = lib.items.findIndex((x) => x.id === id);
       if (i === -1) throw new NotFoundError(`Image not found: ${id}`);
-      lib.items[i] = { ...lib.items[i], ...ItemPatchSchema.parse(patch) };
-      await this.write(lib);
+      lib.items[i] = { ...lib.items[i], ...p };
       return lib.items[i];
     });
   }
 
   /** Deletes the image and removes it from every board. */
   async remove(id: string): Promise<void> {
-    return withFileLock(this.libFile, async () => {
-      const lib = await this.read();
+    const removed = await this.mutate((lib) => {
       const item = lib.items.find((x) => x.id === id);
-      if (!item) return;
       lib.items = lib.items.filter((x) => x.id !== id);
       lib.boards = lib.boards.map((b) => ({ ...b, itemIds: b.itemIds.filter((x) => x !== id) }));
-      await this.write(lib);
-      await fs.rm(path.join(this.filesDir, item.file), { force: true });
+      return item;
     });
+    if (removed) await (await this.s()).delete(fileKey(removed.file));
   }
 
   async fileOf(id: string): Promise<{ item: MediaItem; data: Buffer }> {
     const item = await this.get(id);
-    const data = await fs.readFile(path.join(this.filesDir, item.file)).catch(() => {
-      throw new NotFoundError(`Image file missing: ${id}`);
-    });
-    return { item, data };
+    const data = await (await this.s()).getBytes(fileKey(item.file));
+    if (!data) throw new NotFoundError(`Image file missing: ${id}`);
+    return { item, data: Buffer.from(data) };
   }
 
   async dataUrl(id: string): Promise<string> {
@@ -161,36 +157,30 @@ export class MediaStore {
   }
 
   async addBoard(name: string, notes = "", now = new Date()): Promise<Board> {
-    return withFileLock(this.libFile, async () => {
-      const board: Board = { id: randomUUID(), name: name.trim().slice(0, 80) || "Untitled board", notes: notes.slice(0, 2000), itemIds: [], createdAt: now.toISOString() };
-      const lib = await this.read();
+    const board: Board = { id: randomUUID(), name: name.trim().slice(0, 80) || "Untitled board", notes: notes.slice(0, 2000), itemIds: [], createdAt: now.toISOString() };
+    await this.mutate((lib) => {
       lib.boards.unshift(board);
-      await this.write(lib);
-      return board;
     });
+    return board;
   }
 
   async updateBoard(id: string, patch: z.infer<typeof BoardPatchSchema>): Promise<Board> {
-    return withFileLock(this.libFile, async () => {
-      const lib = await this.read();
+    const p = BoardPatchSchema.parse(patch);
+    return this.mutate((lib) => {
       const i = lib.boards.findIndex((b) => b.id === id);
       if (i === -1) throw new NotFoundError(`Board not found: ${id}`);
-      const p = BoardPatchSchema.parse(patch);
       const known = new Set(lib.items.map((x) => x.id));
       const base = p.itemIds ?? lib.boards[i].itemIds;
       const itemIds = [...new Set([...base, ...(p.addItemIds ?? [])])].filter((x) => known.has(x)).slice(0, 200);
       const { addItemIds: _added, ...rest } = p;
       lib.boards[i] = { ...lib.boards[i], ...rest, itemIds };
-      await this.write(lib);
       return lib.boards[i];
     });
   }
 
   async removeBoard(id: string): Promise<void> {
-    return withFileLock(this.libFile, async () => {
-      const lib = await this.read();
+    await this.mutate((lib) => {
       lib.boards = lib.boards.filter((b) => b.id !== id);
-      await this.write(lib);
     });
   }
 }

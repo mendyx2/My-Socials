@@ -10,7 +10,7 @@ export interface Inspiration {
 const MAX_IMAGES = 4;
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 
-export async function loadInspiration(ids: string[] | undefined, store = new MediaStore()): Promise<Inspiration> {
+export async function loadInspiration(ids: string[] | undefined, store: MediaStore = new MediaStore()): Promise<Inspiration> {
   if (!ids?.length) return { text: "", images: [] };
   const lines: string[] = [];
   const images: Inspiration["images"] = [];

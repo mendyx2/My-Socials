@@ -1,6 +1,4 @@
-import { promises as fs } from "node:fs";
-import path from "node:path";
-import { PROFILE_DIR } from "./paths";
+import { getStorage, type Storage } from "./storage";
 
 /** The knowledge-base files the tool reads. Only these can be edited from the UI. */
 export const KB_FILES = ["about.md", "pillars.md", "brand.md", "voice.md", "updates.md"] as const;
@@ -12,22 +10,20 @@ export function isKbFile(name: string): name is KbFile {
   return (KB_FILES as readonly string[]).includes(name);
 }
 
-export async function readKbFile(name: KbFile, dir = PROFILE_DIR): Promise<string> {
-  try {
-    return await fs.readFile(path.join(dir, name), "utf8");
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === "ENOENT") return "";
-    throw err;
-  }
+const key = (name: KbFile) => `profile/${name}`;
+
+export async function readKbFile(name: KbFile, storage?: Storage): Promise<string> {
+  return (await (storage ?? (await getStorage())).getText(key(name))) ?? "";
 }
 
-export async function writeKbFile(name: KbFile, content: string, dir = PROFILE_DIR): Promise<void> {
+export async function writeKbFile(name: KbFile, content: string, storage?: Storage): Promise<void> {
   if (!isKbFile(name)) throw new Error(`Not a knowledge-base file: ${name}`);
-  await fs.writeFile(path.join(dir, name), content, "utf8");
+  await (storage ?? (await getStorage())).setText(key(name), content);
 }
 
-export async function loadKnowledgeBase(dir = PROFILE_DIR): Promise<KnowledgeBase> {
-  const entries = await Promise.all(KB_FILES.map(async (f) => [f, await readKbFile(f, dir)] as const));
+export async function loadKnowledgeBase(storage?: Storage): Promise<KnowledgeBase> {
+  const s = storage ?? (await getStorage());
+  const entries = await Promise.all(KB_FILES.map(async (f) => [f, await readKbFile(f, s)] as const));
   return Object.fromEntries(entries) as KnowledgeBase;
 }
 

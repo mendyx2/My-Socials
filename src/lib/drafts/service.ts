@@ -3,6 +3,7 @@ import { providersFromEnv, type LlmProvider } from "../llm";
 import { IdeaStore } from "../ideas/store";
 import { loadInspiration } from "../media/inspiration";
 import { MediaStore } from "../media/store";
+import { getStorage, type Storage } from "../storage";
 import { checkDraft, parseBannedWords, type DraftWarning } from "./checks";
 import { copyFromTranscript, createDraft, regenerateSection } from "./generate";
 import type { StoredDraft } from "./schema";
@@ -12,7 +13,8 @@ export interface DraftDeps {
   ideas?: IdeaStore;
   drafts?: DraftStore;
   providers?: LlmProvider[];
-  profileDir?: string;
+  /** Where everything lives; defaults to files locally / Netlify Blobs when hosted. */
+  storage?: Storage;
   media?: MediaStore;
   now?: Date;
 }
@@ -20,10 +22,12 @@ export interface DraftDeps {
 export class NotFoundError extends Error {}
 
 async function context(deps: DraftDeps) {
-  const kb = await loadKnowledgeBase(deps.profileDir);
+  const storage = deps.storage ?? (await getStorage());
+  const kb = await loadKnowledgeBase(storage);
   return {
-    ideas: deps.ideas ?? new IdeaStore(),
-    drafts: deps.drafts ?? new DraftStore(),
+    ideas: deps.ideas ?? new IdeaStore(storage),
+    drafts: deps.drafts ?? new DraftStore(storage),
+    media: deps.media ?? new MediaStore(storage),
     providers: deps.providers ?? providersFromEnv().providers,
     kbText: kbToPrompt(kb),
     banned: parseBannedWords(kb["voice.md"]),
@@ -36,8 +40,8 @@ async function findIdea(ideas: IdeaStore, id: string) {
   return idea;
 }
 
-export async function warningsFor(draft: StoredDraft, profileDir?: string): Promise<DraftWarning[]> {
-  const kb = await loadKnowledgeBase(profileDir);
+export async function warningsFor(draft: StoredDraft, storage?: Storage): Promise<DraftWarning[]> {
+  const kb = await loadKnowledgeBase(storage);
   return checkDraft(draft.content, parseBannedWords(kb["voice.md"]));
 }
 
@@ -56,7 +60,7 @@ export async function regenerateDraftSection(id: string, section: string, instru
   const draft = await ctx.drafts.get(id);
   if (!draft) throw new NotFoundError(`Draft not found: ${id}`);
   const idea = await findIdea(ctx.ideas, draft.ideaId);
-  const inspiration = await loadInspiration(draft.inspirationIds, deps.media);
+  const inspiration = await loadInspiration(draft.inspirationIds, ctx.media);
   const updated = await regenerateSection({ draft, idea, section, instruction, kbText: ctx.kbText, providers: ctx.providers, inspiration, now: deps.now });
   await ctx.drafts.put(updated);
   return { draft: updated, warnings: checkDraft(updated.content, ctx.banned) };
@@ -67,7 +71,7 @@ export async function draftCopyFromTranscript(id: string, transcript: string, de
   const draft = await ctx.drafts.get(id);
   if (!draft) throw new NotFoundError(`Draft not found: ${id}`);
   const idea = await findIdea(ctx.ideas, draft.ideaId);
-  const inspiration = await loadInspiration(draft.inspirationIds, deps.media);
+  const inspiration = await loadInspiration(draft.inspirationIds, ctx.media);
   const updated = await copyFromTranscript({ draft, idea, transcript, kbText: ctx.kbText, providers: ctx.providers, inspiration, now: deps.now });
   await ctx.drafts.put(updated);
   return { draft: updated, warnings: checkDraft(updated.content, ctx.banned) };

@@ -76,9 +76,11 @@ try {
 }
 
 describe.skipIf(!browserOk)("rendering (real browser)", () => {
-  it("renders slides as 1080x1350 PNGs plus a PDF with one page per slide", async () => {
-    process.env.MY_SOCIALS_ROOT ??= process.cwd();
-    const { renderCarousel, RENDERS_DIR } = await import("@/src/lib/visuals/render");
+  it("renders slides as 1080x1350 PNGs plus a small PDF with one page per slide", async () => {
+    const { FileStorage } = await import("@/src/lib/storage");
+    const { renderCarousel, listRendered } = await import("@/src/lib/visuals/render");
+    const dir = mkdtempSync(path.join(tmpdir(), "r-"));
+    const storage = new FileStorage(dir);
     const c = DraftContentSchema.parse({
       format: "carousel",
       slides: [
@@ -89,18 +91,22 @@ describe.skipIf(!browserOk)("rendering (real browser)", () => {
       instagram: { caption: "c" },
       linkedin: { post: "p" },
     }) as CarouselDraft;
-    const id = `test-${path.basename(mkdtempSync(path.join(tmpdir(), "r-")))}`;
-    const files = await renderCarousel(id, c, theme);
+    const files = await renderCarousel("d1", c, theme, {}, storage);
     expect(files.map((f) => f.name)).toEqual(["slide-01.png", "slide-02.png", "slide-03.png", "carousel.pdf"]);
-    const png = readFileSync(path.join(RENDERS_DIR, files[0].rel));
+    const png = readFileSync(path.join(dir, "renders", files[0].rel));
     expect(png.readUInt32BE(16)).toBe(1080); // PNG width
     expect(png.readUInt32BE(20)).toBe(1350); // PNG height
     expect(files[1].warning).toMatch(/Slide 2: Text (was shrunk|still doesn't fit)/);
-    const pdf = readFileSync(path.join(RENDERS_DIR, files[3].rel)).toString("latin1");
+    const pdfBytes = readFileSync(path.join(dir, "renders", files[3].rel));
+    const pdf = pdfBytes.toString("latin1");
     expect(pdf.startsWith("%PDF")).toBe(true);
     expect(pdf.match(/\/Type\s*\/Page[^s]/g)).toHaveLength(3);
-    const { rm } = await import("node:fs/promises");
-    await rm(path.join(RENDERS_DIR, "drafts", id), { recursive: true, force: true });
-    expect(existsSync(path.join(RENDERS_DIR, "drafts", id))).toBe(false);
-  }, 60000);
+    expect(pdf).toContain("/DCTDecode"); // JPEG pages keep the PDF small
+    expect((await listRendered("drafts/d1", storage)).map((f) => f.name)).toEqual(["carousel.pdf", "slide-01.png", "slide-02.png", "slide-03.png"]);
+    // Re-rendering with fewer slides removes the old ones.
+    await renderCarousel("d1", { ...c, slides: [c.slides[0], c.slides[2], c.slides[0]] }, theme, {}, storage);
+    expect(existsSync(path.join(dir, "renders/drafts/d1/slide-03.png"))).toBe(true);
+    await renderCarousel("d1", { ...c, slides: c.slides.slice(0, 3) }, theme, {}, storage);
+    expect((await listRendered("drafts/d1", storage)).length).toBe(4);
+  }, 90000);
 });

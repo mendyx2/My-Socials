@@ -170,35 +170,48 @@ function Preview({ c }: { c: DraftContent }) {
 /* ---------- ZIP download ---------- */
 
 function ZipButton({ draftId, beforeDownload, onDone }: { draftId: string; beforeDownload: () => Promise<boolean>; onDone: () => void }) {
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   async function download() {
     if (!(await beforeDownload())) return;
-    setBusy(true);
     setNote(null);
     try {
-      const res = await fetch(`/api/drafts/${draftId}/zip`);
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? `HTTP ${res.status}`);
-      const warnings: string[] = JSON.parse(decodeURIComponent(res.headers.get("x-render-warnings") ?? "%5B%5D"));
-      const name = /filename="([^"]+)"/.exec(res.headers.get("content-disposition") ?? "")?.[1] ?? "carousel.zip";
-      const url = URL.createObjectURL(await res.blob());
+      // 1) Render on the server, 2) fetch each file, 3) zip here in the browser.
+      // (Building the ZIP on the phone avoids the hosting size limit on a single response.)
+      setBusy("Rendering slides…");
+      const { files } = await api<{ files: { name: string; url: string; warning?: string }[] }>(`/api/drafts/${draftId}/render`, { method: "POST" });
+      setBusy("Packing ZIP…");
+      const { zipSync } = await import("fflate");
+      const entries: Record<string, [Uint8Array, { level: 0 }]> = {};
+      for (const f of files) {
+        const res = await fetch(f.url);
+        if (!res.ok) throw new Error(`Couldn't fetch ${f.name} (HTTP ${res.status})`);
+        entries[f.name] = [new Uint8Array(await res.arrayBuffer()), { level: 0 }];
+      }
+      const zipped = zipSync(entries);
+      const title = document.querySelector("h1")?.textContent ?? "carousel";
+      const name = `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50) || "carousel"}.zip`;
+      const url = URL.createObjectURL(new Blob([zipped.slice().buffer as ArrayBuffer], { type: "application/zip" }));
       const a = document.createElement("a");
       a.href = url;
       a.download = name;
+      document.body.appendChild(a);
       a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+      const warnings = files.map((f) => f.warning).filter(Boolean);
       setNote(warnings.length ? { kind: "error", text: `Downloaded ${name}, but check: ${warnings.join(" · ")}` } : { kind: "ok", text: `Downloaded ${name}.` });
       onDone();
     } catch (err) {
       setNote({ kind: "error", text: (err as Error).message });
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
   return (
     <div className="kb-bar">
-      <button type="button" className="btn btn-primary" onClick={download} disabled={busy}>
-        {busy ? "Rendering ZIP…" : "⬇ Download ZIP (slides + PDF)"}
+      <button type="button" className="btn btn-primary" onClick={download} disabled={busy !== null}>
+        {busy ?? "⬇ Download ZIP (slides + PDF)"}
       </button>
       {note && <span className={note.kind === "error" ? "inline-warning warn" : "field-hint"} role="status">{note.text}</span>}
     </div>

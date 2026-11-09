@@ -1,7 +1,6 @@
 import { promises as fs } from "node:fs";
-import path from "node:path";
 import { z } from "zod";
-import { CONFIG_DIR } from "../paths";
+import bundledFeeds from "../../../config/feeds.json";
 
 export const FeedSchema = z.object({
   name: z.string().min(1),
@@ -27,7 +26,8 @@ export const FeedsConfigSchema = z
 export type Feed = z.infer<typeof FeedSchema>;
 export type FeedsConfig = z.infer<typeof FeedsConfigSchema>;
 
-export async function loadFeedsConfig(file = path.join(CONFIG_DIR, "feeds.json")): Promise<FeedsConfig> {
-  const raw = JSON.parse(await fs.readFile(/*turbopackIgnore: true*/ file, "utf8"));
+/** config/feeds.json is bundled into the app (so it works when hosted). Tests can pass another file. */
+export async function loadFeedsConfig(file?: string): Promise<FeedsConfig> {
+  const raw = file ? JSON.parse(await fs.readFile(/*turbopackIgnore: true*/ file, "utf8")) : bundledFeeds;
   return FeedsConfigSchema.parse(raw);
 }

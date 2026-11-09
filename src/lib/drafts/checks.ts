@@ -109,6 +109,9 @@ export function checkDraft(c: DraftContent, extraBanned: string[] = []): DraftWa
         w.push({ level: "error", section: "slides", message: `Slide ${i + 1} shows a number with no source. Add one or remove the number.` });
       }
     });
+    c.slides.forEach((s, i) => {
+      if (s.layout === "image" && !s.image) w.push({ level: "error", section: "slides", message: `Slide ${i + 1} uses the image layout but has no image. Pick one or change the layout.` });
+    });
     if (c.slides[0]?.layout !== "cover") w.push({ level: "warn", section: "slides", message: "First slide should be a cover (the hook)." });
     if (c.slides.at(-1)?.layout !== "cta") w.push({ level: "warn", section: "slides", message: "Last slide should be a call to action." });
   }

@@ -3,7 +3,8 @@ import { z } from "zod";
 export const LINKEDIN_MAX = 3000;
 export const INSTAGRAM_MAX = 2200;
 export const VIDEO_LENGTHS = [30, 60, 90] as const;
-export const SLIDE_LAYOUTS = ["cover", "point", "stat", "steps", "comparison", "quote", "checklist", "cta"] as const;
+export const SLIDE_LAYOUTS = ["cover", "point", "stat", "steps", "comparison", "quote", "checklist", "image", "cta"] as const;
+export const SLIDE_VARIANTS = ["dark", "light", "accent"] as const;
 export const DRAFT_STATUSES = ["draft", "approved", "posted"] as const;
 
 const str = (max: number) => z.string().trim().min(1).max(max);
@@ -56,6 +57,10 @@ export const SlideSchema = z.object({
   /** A number to show big on a "stat" slide. Must have a source. */
   stat: z.string().trim().max(40).default(""),
   source: z.string().trim().max(300).default(""),
+  /** Colour style of this slide. */
+  variant: z.preprocess((v) => (typeof v === "string" ? v.trim().toLowerCase() : v), z.enum(SLIDE_VARIANTS)).catch("dark").default("dark"),
+  /** Library image id. Fills the slide on "cover"/"image" layouts, shown as a picture on the others. */
+  image: z.string().trim().max(60).default(""),
 });
 
 export const CarouselDraftSchema = z.object({
@@ -98,4 +103,6 @@ export interface StoredDraft {
   generatedBy: string;
   content: DraftContent;
   sources: { title: string; url: string; source: string }[];
+  /** Library images attached as inspiration; used when rewriting. */
+  inspirationIds?: string[];
 }

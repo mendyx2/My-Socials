@@ -4,6 +4,8 @@ export interface LlmRequest {
   /** Ask the provider to return a JSON object. */
   json?: boolean;
   temperature?: number;
+  /** Optional images (base64, no data: prefix). Providers without vision should error so the next one is tried. */
+  images?: { mime: string; data: string }[];
 }
 
 export interface LlmResponse {

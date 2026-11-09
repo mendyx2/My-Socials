@@ -20,6 +20,8 @@ export const ThemeSchema = z.object({
     border: color,
     accent: color,
     accentStrong: color,
+    /** Darker accent for light slides, where the normal accent is too pale to read. */
+    accentDark: color.default("#3B5BA9"),
     text: color,
     muted: color,
   }),

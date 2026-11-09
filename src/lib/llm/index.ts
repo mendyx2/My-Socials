@@ -103,14 +103,24 @@ export async function generateJsonWithFallback<T>(
     );
   }
   const errors: string[] = [];
-  for (const p of providers) {
-    const label = `${p.name}/${p.model}`;
-    try {
-      const res = await p.generate({ ...req, json: true });
-      return { value: parse(extractJson(res.text)), generatedBy: label };
-    } catch (err) {
-      errors.push(`${label}: ${(err as Error).message}`);
+  const attempt = async (r: Omit<LlmRequest, "json">, suffix: string) => {
+    for (const p of providers) {
+      const label = `${p.name}/${p.model}`;
+      try {
+        const res = await p.generate({ ...r, json: true });
+        return { value: parse(extractJson(res.text)), generatedBy: label + suffix };
+      } catch (err) {
+        errors.push(`${label}${suffix}: ${(err as Error).message}`);
+      }
     }
+    return null;
+  };
+  const first = await attempt(req, "");
+  if (first) return first;
+  // Some free models can't read images. Rather than fail, try again with text only.
+  if (req.images?.length) {
+    const textOnly = await attempt({ ...req, images: undefined }, " (images not read)");
+    if (textOnly) return textOnly;
   }
   throw new LlmError(`All AI providers failed:\n- ${errors.join("\n- ")}`, "all");
 }

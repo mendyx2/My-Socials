@@ -117,7 +117,12 @@ async function freshDir(rel: string): Promise<string> {
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "item";
 
-export async function renderCarousel(draftId: string, c: CarouselDraft, theme: Theme): Promise<RenderedFile[]> {
+export async function renderCarousel(
+  draftId: string,
+  c: CarouselDraft,
+  theme: Theme,
+  images: Record<string, string> = {},
+): Promise<RenderedFile[]> {
   const rel = path.posix.join("drafts", draftId);
   const dir = await freshDir(rel);
   const css = await fontCss();
@@ -127,7 +132,9 @@ export async function renderCarousel(draftId: string, c: CarouselDraft, theme: T
     for (const [i, s] of c.slides.entries()) {
       const name = `slide-${String(i + 1).padStart(2, "0")}.png`;
       const out = path.join(dir, name);
-      const warning = await renderPng(browser, slideHtml(s, i, c.slides.length, theme, css), SIZES.slide, out);
+      const html = slideHtml(s, i, c.slides.length, theme, css, { imageSrc: (id) => images[id] });
+      const missing = s.image && !images[s.image] ? "its image is missing from the library" : undefined;
+      const warning = (await renderPng(browser, html, SIZES.slide, out)) ?? missing;
       pngs.push(out);
       files.push({ name, rel: `${rel}/${name}`, kind: "png", ...SIZES.slide, ...(warning ? { warning: `Slide ${i + 1}: ${warning}` } : {}) });
     }

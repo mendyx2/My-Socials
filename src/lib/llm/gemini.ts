@@ -19,7 +19,12 @@ export function geminiProvider(opts: { apiKey: string; model: string; fetch?: Fe
         headers: { "content-type": "application/json", "x-goog-api-key": opts.apiKey },
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: req.system }] },
-          contents: [{ role: "user", parts: [{ text: req.prompt }] }],
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: req.prompt }, ...(req.images ?? []).map((i) => ({ inlineData: { mimeType: i.mime, data: i.data } }))],
+            },
+          ],
           generationConfig: {
             temperature: req.temperature ?? 0.8,
             ...(req.json ? { responseMimeType: "application/json" } : {}),

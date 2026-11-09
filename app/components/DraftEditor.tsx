@@ -3,18 +3,17 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { api, Field, HashtagField, LinesField, Section } from "./ui";
+import { api, Field, HashtagField, Section } from "./ui";
 import { Visuals } from "./Visuals";
+import { InspirationPanel, SlidesEditor } from "./CarouselEditor";
 import { assembleInstagram, assembleLinkedIn, checkDraft, type DraftWarning } from "@/src/lib/drafts/checks";
 import {
   DRAFT_STATUSES,
   INSTAGRAM_MAX,
   LINKEDIN_MAX,
-  SLIDE_LAYOUTS,
   type CarouselDraft,
   type DraftContent,
   type DraftStatus,
-  type Slide,
   type StoredDraft,
   type TextDraft,
   type VideoDraft,
@@ -126,55 +125,6 @@ function ScriptEditor({ c, set }: { c: VideoDraft; set: (c: VideoDraft) => void 
   );
 }
 
-function SlidesEditor({ c, set }: { c: CarouselDraft; set: (c: CarouselDraft) => void }) {
-  const setSlide = (i: number, patch: Partial<Slide>) => set({ ...c, slides: c.slides.map((s, j) => (j === i ? { ...s, ...patch } : s)) });
-  const move = (i: number, d: -1 | 1) => {
-    const slides = [...c.slides];
-    [slides[i], slides[i + d]] = [slides[i + d], slides[i]];
-    set({ ...c, slides });
-  };
-  return (
-    <>
-      <div className="slides">
-        {c.slides.map((s, i) => (
-          <div key={i} className="slide">
-            <div className="beat-head">
-              <strong>Slide {i + 1}</strong>
-              <select aria-label={`Layout for slide ${i + 1}`} value={s.layout} onChange={(e) => setSlide(i, { layout: e.target.value as Slide["layout"] })}>
-                {SLIDE_LAYOUTS.map((l) => (
-                  <option key={l} value={l}>{l}</option>
-                ))}
-              </select>
-              <span className="spacer" />
-              <button className="btn btn-small" aria-label="Move up" disabled={i === 0} onClick={() => move(i, -1)}>↑</button>
-              <button className="btn btn-small" aria-label="Move down" disabled={i === c.slides.length - 1} onClick={() => move(i, 1)}>↓</button>
-              <button className="btn btn-small" aria-label={`Remove slide ${i + 1}`} disabled={c.slides.length <= 3} onClick={() => set({ ...c, slides: c.slides.filter((_, j) => j !== i) })}>✕</button>
-            </div>
-            <Field label="Title" value={s.title} max={140} onChange={(v) => setSlide(i, { title: v })} />
-            <Field label="Body" rows={2} value={s.body} onChange={(v) => setSlide(i, { body: v })} />
-            {["steps", "checklist", "comparison", "point"].includes(s.layout) && (
-              <LinesField label="Items (one per line)" rows={3} max={8} value={s.items} onChange={(v) => setSlide(i, { items: v })} />
-            )}
-            {(s.layout === "stat" || s.stat) && (
-              <div className="two-col">
-                <Field label="Big number" value={s.stat} onChange={(v) => setSlide(i, { stat: v })} />
-                <Field label="Source (required with a number)" value={s.source} onChange={(v) => setSlide(i, { source: v })} />
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-      <button
-        className="btn btn-small"
-        disabled={c.slides.length >= 12}
-        onClick={() => set({ ...c, slides: [...c.slides.slice(0, -1), { layout: "point", title: "New slide", body: "", items: [], stat: "", source: "" }, ...c.slides.slice(-1)] })}
-      >
-        + Add slide
-      </button>
-    </>
-  );
-}
-
 /* ---------- preview ---------- */
 
 function Preview({ c }: { c: DraftContent }) {
@@ -217,6 +167,44 @@ function Preview({ c }: { c: DraftContent }) {
   );
 }
 
+/* ---------- ZIP download ---------- */
+
+function ZipButton({ draftId, beforeDownload, onDone }: { draftId: string; beforeDownload: () => Promise<boolean>; onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+  async function download() {
+    if (!(await beforeDownload())) return;
+    setBusy(true);
+    setNote(null);
+    try {
+      const res = await fetch(`/api/drafts/${draftId}/zip`);
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? `HTTP ${res.status}`);
+      const warnings: string[] = JSON.parse(decodeURIComponent(res.headers.get("x-render-warnings") ?? "%5B%5D"));
+      const name = /filename="([^"]+)"/.exec(res.headers.get("content-disposition") ?? "")?.[1] ?? "carousel.zip";
+      const url = URL.createObjectURL(await res.blob());
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      setNote(warnings.length ? { kind: "error", text: `Downloaded ${name}, but check: ${warnings.join(" · ")}` } : { kind: "ok", text: `Downloaded ${name}.` });
+      onDone();
+    } catch (err) {
+      setNote({ kind: "error", text: (err as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="kb-bar">
+      <button type="button" className="btn btn-primary" onClick={download} disabled={busy}>
+        {busy ? "Rendering ZIP…" : "⬇ Download ZIP (slides + PDF)"}
+      </button>
+      {note && <span className={note.kind === "error" ? "inline-warning warn" : "field-hint"} role="status">{note.text}</span>}
+    </div>
+  );
+}
+
 /* ---------- main editor ---------- */
 
 export function DraftEditor({ initial, banned }: { initial: StoredDraft; banned: string[] }) {
@@ -226,6 +214,7 @@ export function DraftEditor({ initial, banned }: { initial: StoredDraft; banned:
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [transcript, setTranscript] = useState("");
+  const [visualsKey, setVisualsKey] = useState(0);
 
   const dirty = JSON.stringify(content) !== JSON.stringify(draft.content);
   const warnings = useMemo(() => checkDraft(content, banned), [content, banned]);
@@ -346,6 +335,9 @@ export function DraftEditor({ initial, banned }: { initial: StoredDraft; banned:
 
       <div className="draft-layout">
         <div className="draft-sections">
+          <Section title="Inspiration" busy={busy} warnings={[]}>
+            <InspirationPanel draftId={draft.id} ids={draft.inspirationIds ?? []} onChange={(ids) => setDraft((d) => ({ ...d, inspirationIds: ids }))} />
+          </Section>
           {content.format === "video" && (
             <>
               <Section title="Hooks (first 1–3 seconds)" section="hooks" {...sectionProps}>
@@ -362,11 +354,13 @@ export function DraftEditor({ initial, banned }: { initial: StoredDraft; banned:
             </Section>
           )}
           {content.format === "carousel" && (
-            <Section title="Slide images" busy={busy} warnings={[]}>
+            <Section title="Download" busy={busy} warnings={[]}>
+              <ZipButton draftId={draft.id} beforeDownload={async () => (dirty ? save() : true)} onDone={() => setVisualsKey((k) => k + 1)} />
               <Visuals
+                key={visualsKey}
                 endpoint={`/api/drafts/${draft.id}/render`}
                 buttonLabel="Render slides"
-                intro="PNG slides (1080×1350) for an Instagram carousel, and one PDF to upload as a LinkedIn document post. Uses your saved slides and the colors in config/theme.json."
+                intro="Or render here to check every slide full size first. PNGs (1080×1350) for an Instagram carousel, one PDF for a LinkedIn document post."
                 beforeRender={async () => (dirty ? save() : true)}
               />
             </Section>

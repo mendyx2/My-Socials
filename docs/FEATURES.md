@@ -32,10 +32,15 @@ Details and reasoning: see `PLAN.md`.
 - Setup checklist and "out of date" warning when `about.md`, `pillars.md` or `updates.md` change after the live version.
 - _Built (stage 3)._ Later: audit of a pasted live profile.
 
-## 5. Planning & publishing
+## 5. Planning & posting (manual by choice)
 - Content calendar: what goes out when, on which platform, mix of pillars and formats.
 - Human approval before anything posts.
-- Publish via official APIs where possible (LinkedIn text/image posts; Instagram images/carousels); otherwise "ready to post" export for manual upload (videos, LinkedIn PDFs).
+- **No API publishing** (decided Nov 2026). Copy buttons for every piece of text; carousels download as a ZIP (PNG slides + LinkedIn PDF).
+
+## 5b. Carousel editor and library (built)
+- Live preview of every slide while editing; layout, colour style (dark / light / accent), images, reorder, duplicate.
+- Library of uploaded images: inspiration, storyboard frames, own photos; notes on each; storyboards with ordered frames.
+- Attach inspiration to any draft; section rewrites use the notes, and Gemini also sees the images.
 
 ## 6. Performance feedback
 - Instagram insights via API; LinkedIn numbers imported manually (CSV/paste).

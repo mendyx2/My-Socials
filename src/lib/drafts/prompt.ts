@@ -42,7 +42,7 @@ const SHAPES: Record<DraftFormat, string> = {
   "format": "carousel",
   "slides": [
     { "layout": "cover", "title": "hook, max ~8 words", "body": "optional subtitle", "items": [], "stat": "", "source": "" },
-    { "layout": "point | stat | steps | comparison | quote | checklist", "title": "slide headline", "body": "max ~25 words", "items": ["bullets for steps/checklist/comparison"], "stat": "a number only if it is in the sources", "source": "source title when stat is used" },
+    { "layout": "point | stat | steps | comparison | quote | checklist", "title": "slide headline", "body": "max ~25 words", "items": ["bullets for steps/checklist/comparison"], "stat": "a number only if it is in the sources", "source": "source title when stat is used", "variant": "dark | light | accent" },
     { "layout": "cta", "title": "call to action", "body": "Book a free call: link in bio / in comments", "items": [], "stat": "", "source": "" }
   ],
   "instagram": { "caption": "carousel caption", "hashtags": ["#Tag"] },
@@ -55,7 +55,7 @@ const FORMAT_RULES: Record<DraftFormat, (opts: { targetSeconds: number }) => str
   video: ({ targetSeconds }) =>
     `Write a ${targetSeconds}-second talking-to-camera video script. Speaking pace is about 2.5 words per second, so the teleprompter text must be no more than ~${Math.round(targetSeconds * 2.5)} words. Beat seconds must add up to about ${targetSeconds}. She records and edits the video herself; "shot" notes are suggestions for her editing.`,
   carousel: () =>
-    `Write a 6-10 slide infographic carousel. Slide 1 is "cover" (the hook), the last slide is "cta". Each slide has one idea and few words, because it must be readable on a phone. Use "stat" slides only with numbers from the sources, and fill "source". Use "steps"/"checklist" with 2-5 short items. For "comparison", set body to "Left vs Right" (e.g. "Manual vs Automated") and write each item as "left side | right side".`,
+    `Write a 6-10 slide infographic carousel. Slide 1 is "cover" (the hook), the last slide is "cta". Each slide has one idea and few words, because it must be readable on a phone. Use "stat" slides only with numbers from the sources, and fill "source". Use "variant" for rhythm: mostly "dark", with 1-2 "accent" or "light" slides for emphasis (e.g. the stat or the key takeaway). Keep "cover" and "cta" dark. Don't use the "image" layout; she adds images herself. Use "steps"/"checklist" with 2-5 short items. For "comparison", set body to "Left vs Right" (e.g. "Manual vs Automated") and write each item as "left side | right side".`,
 };
 
 function ideaBlock(idea: StoredIdea): string {

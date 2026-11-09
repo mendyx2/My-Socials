@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { generateJsonWithFallback, type LlmProvider } from "../llm";
 import type { StoredIdea } from "../ideas/schema";
+import type { Inspiration } from "../media/inspiration";
 import { buildDraftPrompt, buildSectionPrompt, buildTranscriptPrompt, DRAFT_SYSTEM } from "./prompt";
 import {
   DraftContentSchema,
@@ -62,6 +63,7 @@ export async function regenerateSection(args: {
   instruction?: string;
   kbText: string;
   providers: LlmProvider[];
+  inspiration?: Inspiration;
   now?: Date;
 }): Promise<StoredDraft> {
   const { draft, idea, section, instruction, kbText, providers } = args;
@@ -74,13 +76,18 @@ export async function regenerateSection(args: {
     providers,
     {
       system: DRAFT_SYSTEM,
-      prompt: buildSectionPrompt({ kbText, idea, current, section, fields, instruction: instruction?.trim() || undefined }),
+      prompt: buildSectionPrompt({ kbText, idea, current, section, fields, instruction: instruction?.trim() || undefined }) + (args.inspiration?.text ?? ""),
       temperature: 0.9,
+      images: args.inspiration?.images.length ? args.inspiration.images : undefined,
     },
     (raw) => {
       const fresh = parseDraftContent(raw, current.format) as Record<string, unknown>;
       const merged: Record<string, unknown> = { ...current };
       for (const f of fields) merged[f] = fresh[f];
+      // The AI never picks images; keep the ones she chose, slide by slide.
+      if (current.format === "carousel" && Array.isArray(merged.slides)) {
+        merged.slides = (merged.slides as { image?: string }[]).map((s, i) => (s.image ? s : { ...s, image: current.slides[i]?.image ?? "" }));
+      }
       return DraftContentSchema.parse(merged);
     },
   );
@@ -96,6 +103,7 @@ export async function copyFromTranscript(args: {
   transcript: string;
   kbText: string;
   providers: LlmProvider[];
+  inspiration?: Inspiration;
   now?: Date;
 }): Promise<StoredDraft> {
   const { draft, idea, transcript, kbText, providers } = args;
@@ -104,7 +112,12 @@ export async function copyFromTranscript(args: {
   const current = draft.content;
   const { value, generatedBy } = await generateJsonWithFallback(
     providers,
-    { system: DRAFT_SYSTEM, prompt: buildTranscriptPrompt({ kbText, idea, current, transcript }), temperature: 0.7 },
+    {
+      system: DRAFT_SYSTEM,
+      prompt: buildTranscriptPrompt({ kbText, idea, current, transcript }) + (args.inspiration?.text ?? ""),
+      temperature: 0.7,
+      images: args.inspiration?.images.length ? args.inspiration.images : undefined,
+    },
     (raw) => TranscriptCopySchema.parse(raw),
   );
   return {

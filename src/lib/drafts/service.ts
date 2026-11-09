@@ -1,6 +1,8 @@
 import { kbToPrompt, loadKnowledgeBase } from "../kb";
 import { providersFromEnv, type LlmProvider } from "../llm";
 import { IdeaStore } from "../ideas/store";
+import { loadInspiration } from "../media/inspiration";
+import { MediaStore } from "../media/store";
 import { checkDraft, parseBannedWords, type DraftWarning } from "./checks";
 import { copyFromTranscript, createDraft, regenerateSection } from "./generate";
 import type { StoredDraft } from "./schema";
@@ -11,6 +13,7 @@ export interface DraftDeps {
   drafts?: DraftStore;
   providers?: LlmProvider[];
   profileDir?: string;
+  media?: MediaStore;
   now?: Date;
 }
 
@@ -53,7 +56,8 @@ export async function regenerateDraftSection(id: string, section: string, instru
   const draft = await ctx.drafts.get(id);
   if (!draft) throw new NotFoundError(`Draft not found: ${id}`);
   const idea = await findIdea(ctx.ideas, draft.ideaId);
-  const updated = await regenerateSection({ draft, idea, section, instruction, kbText: ctx.kbText, providers: ctx.providers, now: deps.now });
+  const inspiration = await loadInspiration(draft.inspirationIds, deps.media);
+  const updated = await regenerateSection({ draft, idea, section, instruction, kbText: ctx.kbText, providers: ctx.providers, inspiration, now: deps.now });
   await ctx.drafts.put(updated);
   return { draft: updated, warnings: checkDraft(updated.content, ctx.banned) };
 }
@@ -63,7 +67,8 @@ export async function draftCopyFromTranscript(id: string, transcript: string, de
   const draft = await ctx.drafts.get(id);
   if (!draft) throw new NotFoundError(`Draft not found: ${id}`);
   const idea = await findIdea(ctx.ideas, draft.ideaId);
-  const updated = await copyFromTranscript({ draft, idea, transcript, kbText: ctx.kbText, providers: ctx.providers, now: deps.now });
+  const inspiration = await loadInspiration(draft.inspirationIds, deps.media);
+  const updated = await copyFromTranscript({ draft, idea, transcript, kbText: ctx.kbText, providers: ctx.providers, inspiration, now: deps.now });
   await ctx.drafts.put(updated);
   return { draft: updated, warnings: checkDraft(updated.content, ctx.banned) };
 }

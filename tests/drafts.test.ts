@@ -93,6 +93,11 @@ describe("checks", () => {
     expect(msgs).toMatch(/6 hashtags/);
   });
 
+  it("errors on an image layout with no image", () => {
+    const d = parse({ ...carouselDraft, slides: [...carouselDraft.slides.slice(0, 3), { layout: "image", title: "Photo" }, carouselDraft.slides[3]] });
+    expect(checkDraft(d)).toContainEqual(expect.objectContaining({ level: "error", message: expect.stringMatching(/Slide 4 uses the image layout/) }));
+  });
+
   it("errors on an unsourced number in a carousel", () => {
     const d = parse({ ...carouselDraft, slides: carouselDraft.slides.map((s, i) => (i === 1 ? { ...s, source: "" } : s)) });
     expect(checkDraft(d)).toContainEqual(expect.objectContaining({ level: "error", section: "slides" }));
@@ -125,6 +130,8 @@ function fakeAi(log: LlmRequest[] = []): LlmProvider {
         out = { instagram: { caption: "From transcript", hashtags: ["#T"] }, linkedin: { post: "From transcript LI", hashtags: [] } };
       } else if (req.prompt.includes('Rewrite only the "hooks"')) {
         out = { ...videoDraft, hooks: ["New hook A", "New hook B"], cta: "THIS SHOULD BE IGNORED", targetSeconds: 15 };
+      } else if (req.prompt.includes('"format": "carousel"')) {
+        out = carouselDraft;
       } else if (req.prompt.includes('"format": "video"')) {
         out = { ...videoDraft, targetSeconds: 45 }; // model ignores the requested length
       } else {
@@ -181,6 +188,16 @@ describe("draft service", () => {
     expect(log.at(-1)!.prompt).toContain('"more provocative"');
     await expect(regenerateDraftSection(draft.id, "slides", undefined, deps)).rejects.toThrow(/Unknown section/);
     await expect(regenerateDraftSection("missing", "hooks", undefined, deps)).rejects.toBeInstanceOf(NotFoundError);
+  });
+
+  it("keeps her chosen slide images when the AI rewrites the slides", async () => {
+    const { idea, deps } = await setup("carousel");
+    const { draft } = await draftIdea(idea.id, {}, deps);
+    const c = draft.content as any;
+    c.slides[0].image = "photo-1";
+    await deps.drafts.update(draft.id, { content: c });
+    const { draft: after } = await regenerateDraftSection(draft.id, "slides", undefined, deps);
+    expect((after.content as any).slides[0].image).toBe("photo-1");
   });
 
   it("rewrites captions from a transcript (video only)", async () => {

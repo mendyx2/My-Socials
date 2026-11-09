@@ -12,6 +12,7 @@
     "border": "rgba(255, 255, 255, 0.14)",
     "accent": "#9DBAF4",
     "accentStrong": "#C4D6FB",
+    "accentDark": "#3B5BA9",
     "text": "#F2F4F8",
     "muted": "#A9B1C3"
   }

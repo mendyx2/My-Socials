@@ -15,7 +15,7 @@ _Last researched: November 2026. API policies and free tiers change often, so re
    - **Video ideas and scripts** (I edit the videos myself, outside the tool).
    - **Carousels in infographic style**: ideas, slide copy, and finished slide images/PDFs.
 4. **Set up and refresh my profiles**: LinkedIn headline/About/banner and Instagram bio, kept in line with my knowledge base.
-5. **Schedule/publish** to LinkedIn and Instagram, or hand off a ready-to-post draft.
+5. ~~Schedule/publish~~ **Decided (Nov 2026): no publishing.** I copy and paste text and download carousels as a ZIP.
 6. Track **what performed**, to feed back into ideas.
 
 ---
@@ -120,7 +120,7 @@ Build it, **but build the idea/draft engine first and treat auto-publishing as o
 - Banner and highlight-cover templates using the same system.
 - Profile writer and audit (see 5d); run it once at the start to set up both profiles.
 
-**Phase 3 — Publishing (~1–2 weeks, optional)**
+**Phase 3 — Publishing: dropped (Nov 2026).** Kept below for reference only.
 - LinkedIn: register app, Share on LinkedIn, OAuth, post text/images; re-auth reminder before the 60-day expiry.
 - Instagram: convert to Creator account, link FB Page, Meta app in dev mode, publish via containers; host images publicly (e.g. GitHub raw URL or a free object store).
 - Always **human approval before posting.** No fully automatic posting.
@@ -225,7 +225,7 @@ The tool writes and audits my profiles from the knowledge base. **I paste the re
 ## 7. Open decisions for me
 
 1. ~~Niche and pillars~~ **Decided:** web/frontend, Flutter/mobile, AI automation (see `profile/about.md`, `profile/pillars.md`). Ideal clients: **small businesses and startups.**
-2. Do I want auto-publishing at all, or just ideas + drafts?
+2. ~~Auto-publishing?~~ **Decided: no.** Copy-paste and ZIP downloads.
 3. Is my Instagram already Creator/Business? (Required for the API.)
 4. Private or public repo? (Public = unlimited Actions minutes but **exposes personal info**; private is recommended.)
 5. Local-only vs. GitHub Actions automation.

@@ -1,5 +1,5 @@
 import path from "node:path";
-import { readJson, writeJson } from "../json-file";
+import { readJson, withFileLock, writeJson } from "../json-file";
 import { DATA_DIR } from "../paths";
 import { STATUSES, type IdeaStatus, type StoredIdea } from "./schema";
 
@@ -21,11 +21,17 @@ export class IdeaStore {
   }
 
   async add(ideas: StoredIdea[]): Promise<void> {
-    const all = await this.list();
-    await writeJson(this.ideasFile, { ideas: [...ideas, ...all] });
+    return withFileLock(this.ideasFile, async () => {
+      const all = await this.list();
+      await writeJson(this.ideasFile, { ideas: [...ideas, ...all] });
+    });
   }
 
   async update(id: string, patch: { status?: IdeaStatus; notes?: string }): Promise<StoredIdea> {
+    return withFileLock(this.ideasFile, () => this.updateUnlocked(id, patch));
+  }
+
+  private async updateUnlocked(id: string, patch: { status?: IdeaStatus; notes?: string }): Promise<StoredIdea> {
     if (patch.status && !STATUSES.includes(patch.status)) throw new Error(`Invalid status: ${patch.status}`);
     const all = await this.list();
     const idx = all.findIndex((i) => i.id === id);
@@ -46,6 +52,10 @@ export class IdeaStore {
   }
 
   async markNewsSeen(ids: string[]): Promise<void> {
+    return withFileLock(this.seenFile, () => this.markUnlocked(ids));
+  }
+
+  private async markUnlocked(ids: string[]): Promise<void> {
     const data = await readJson<{ ids: string[] }>(this.seenFile, { ids: [] });
     const merged = [...new Set([...ids, ...data.ids])].slice(0, MAX_SEEN);
     await writeJson(this.seenFile, { ids: merged });

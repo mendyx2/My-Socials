@@ -5,7 +5,7 @@ import { NotFoundError } from "../drafts/service";
 import { toStoredIdeas } from "../ideas/generate";
 import type { StoredIdea } from "../ideas/schema";
 import { IdeaStore } from "../ideas/store";
-import { readJson, writeJson } from "../json-file";
+import { readJson, withFileLock, writeJson } from "../json-file";
 import { kbToPrompt, loadKnowledgeBase, type KnowledgeBase } from "../kb";
 import { generateJsonWithFallback, providersFromEnv, type LlmProvider } from "../llm";
 import { loadFeedsConfig, type FeedsConfig } from "../news/config";
@@ -51,13 +51,22 @@ export class ProfileStore {
     if (!v) throw new NotFoundError(`Profile version not found: ${id}`);
     return v;
   }
+  /** Read-modify-write under a lock, so overlapping requests can't undo each other. */
+  mutate<T>(fn: (data: ProfileFile) => T | Promise<T>): Promise<T> {
+    return withFileLock(this.file, async () => {
+      const data = await this.read();
+      const result = await fn(data);
+      await this.write(data);
+      return result;
+    });
+  }
   async put(version: ProfileVersion): Promise<ProfileVersion> {
-    const data = await this.read();
-    const i = data.versions.findIndex((v) => v.id === version.id);
-    if (i === -1) data.versions.unshift(version);
-    else data.versions[i] = version;
-    await this.write(data);
-    return version;
+    return this.mutate((data) => {
+      const i = data.versions.findIndex((v) => v.id === version.id);
+      if (i === -1) data.versions.unshift(version);
+      else data.versions[i] = version;
+      return version;
+    });
   }
 }
 
@@ -144,7 +153,7 @@ export async function updateProfile(
   deps: ProfileDeps = {},
 ) {
   const c = await ctx(deps);
-  const data = await c.store.read();
+  return c.store.mutate((data) => {
   const current = data.versions.find((v) => v.id === id);
   if (!current) throw new NotFoundError(`Profile version not found: ${id}`);
   if (current.status !== "draft" && patch.content) throw new Error("This version is read-only. Start a new version from it to edit.");
@@ -160,8 +169,8 @@ export async function updateProfile(
     if (patch.status === "live" && v.status === "live") return { ...v, status: "old" as const };
     return v;
   });
-  await c.store.write(data);
   return { version: updated, warnings: warnings(updated, c.banned) };
+  });
 }
 
 /** Copies any version into a new editable draft. */
@@ -175,10 +184,10 @@ export async function duplicateProfile(id: string, deps: ProfileDeps = {}) {
 
 export async function setChecklistItem(itemId: string, done: boolean, deps: ProfileDeps = {}) {
   const store = deps.store ?? new ProfileStore();
-  const data = await store.read();
-  data.checklist = { ...data.checklist, [itemId]: done };
-  await store.write(data);
-  return data.checklist;
+  return store.mutate((data) => {
+    data.checklist = { ...data.checklist, [itemId]: done };
+    return data.checklist;
+  });
 }
 
 /** Sends launch posts to the ideas board so they can be drafted like any other idea. */

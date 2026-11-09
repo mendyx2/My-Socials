@@ -17,7 +17,11 @@ export async function GET(req: Request, ctx: Ctx) {
   return Response.json({ draft, warnings: await warningsFor(draft) });
 }
 
-const PatchSchema = z.object({ content: DraftContentSchema.optional(), status: z.enum(DRAFT_STATUSES).optional() });
+const PatchSchema = z.object({
+  content: DraftContentSchema.optional(),
+  status: z.enum(DRAFT_STATUSES).optional(),
+  inspirationIds: z.array(z.string().max(60)).max(10).optional(),
+});
 
 export async function PATCH(req: Request, ctx: Ctx) {
   const denied = rejectIfNotLocal(req);

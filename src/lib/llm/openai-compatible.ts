@@ -30,7 +30,15 @@ export function openAiCompatibleProvider(opts: {
           temperature: req.temperature ?? 0.8,
           messages: [
             { role: "system", content: req.system },
-            { role: "user", content: req.prompt },
+            {
+              role: "user",
+              content: req.images?.length
+                ? [
+                    { type: "text", text: req.prompt },
+                    ...req.images.map((i) => ({ type: "image_url", image_url: { url: `data:${i.mime};base64,${i.data}` } })),
+                  ]
+                : req.prompt,
+            },
           ],
           ...(req.json ? { response_format: { type: "json_object" } } : {}),
         }),

@@ -43,6 +43,23 @@ describe("templates", () => {
     expect(highlightHtml("✨ Services", theme, "")).toContain(">S<");
   });
 
+  it("applies the slide's colour variant", () => {
+    expect(slideHtml(slide({ layout: "point", title: "T", variant: "accent" }), 0, 3, theme, "")).toContain('class="canvas slide v-accent layout-point');
+    expect(slide({ layout: "point", title: "T", variant: "neon" }).variant).toBe("dark");
+  });
+
+  it("uses images only from data URLs or the media route, as background on cover/image and inline elsewhere", () => {
+    const data = "data:image/png;base64,AAAA";
+    const cover = slideHtml(slide({ layout: "cover", title: "T", image: "a" }), 0, 3, theme, "", { imageSrc: () => data });
+    expect(cover).toContain('class="bg-img"');
+    expect(cover).toContain("has-bg");
+    const point = slideHtml(slide({ layout: "point", title: "T", image: "a" }), 0, 3, theme, "", { imageSrc: () => "/api/media/abc-123/file" });
+    expect(point).toContain('<div class="media"><img src="/api/media/abc-123/file"');
+    const evil = slideHtml(slide({ layout: "cover", title: "T", image: "a" }), 0, 3, theme, "", { imageSrc: () => "https://evil.example/x.png" });
+    expect(evil).not.toContain("evil.example");
+    expect(evil).not.toContain('class="bg-img"');
+  });
+
   it("validates theme colors", () => {
     expect(() => ThemeSchema.parse({ ...theme, colors: { ...theme.colors, accent: "url(javascript:x)" } })).toThrow();
   });

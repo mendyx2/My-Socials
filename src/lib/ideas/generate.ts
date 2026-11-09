@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { extractJson, LlmError, type LlmProvider } from "../llm";
+import { generateJsonWithFallback, type LlmProvider } from "../llm";
 import type { FeedsConfig } from "../news/config";
 import type { ScoredNews } from "../news/select";
 import { buildIdeasPrompt, SYSTEM_PROMPT } from "./prompt";
@@ -65,28 +65,18 @@ export async function generateIdeas(args: {
   now: Date;
 }): Promise<{ ideas: StoredIdea[]; dropped: number; generatedBy: string }> {
   const { providers, count, now } = args;
-  if (providers.length === 0) {
-    throw new LlmError(
-      "No AI provider is configured. Add GEMINI_API_KEY and/or GROQ_API_KEY to .env.local (see .env.example).",
-      "none",
-    );
-  }
-  const prompt = buildIdeasPrompt(args);
-  const errors: string[] = [];
-  for (const p of providers) {
-    const label = `${p.name}/${p.model}`;
-    try {
-      const res = await p.generate({ system: SYSTEM_PROMPT, prompt, json: true, temperature: 0.8 });
-      const { ideas, dropped } = parseIdeas(extractJson(res.text));
-      if (ideas.length === 0) throw new Error(`no valid ideas (${dropped} malformed)`);
-      return {
-        ideas: toStoredIdeas(ideas.slice(0, count), args.news, args.cfg, { now, generatedBy: label }),
-        dropped,
-        generatedBy: label,
-      };
-    } catch (err) {
-      errors.push(`${label}: ${(err as Error).message}`);
-    }
-  }
-  throw new LlmError(`All AI providers failed:\n- ${errors.join("\n- ")}`, "all");
+  const { value, generatedBy } = await generateJsonWithFallback(
+    providers,
+    { system: SYSTEM_PROMPT, prompt: buildIdeasPrompt(args), temperature: 0.8 },
+    (raw) => {
+      const parsed = parseIdeas(raw);
+      if (parsed.ideas.length === 0) throw new Error(`no valid ideas (${parsed.dropped} malformed)`);
+      return parsed;
+    },
+  );
+  return {
+    ideas: toStoredIdeas(value.ideas.slice(0, count), args.news, args.cfg, { now, generatedBy }),
+    dropped: value.dropped,
+    generatedBy,
+  };
 }

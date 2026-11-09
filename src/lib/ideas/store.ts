@@ -1,26 +1,9 @@
-import { promises as fs } from "node:fs";
 import path from "node:path";
+import { readJson, writeJson } from "../json-file";
 import { DATA_DIR } from "../paths";
 import { STATUSES, type IdeaStatus, type StoredIdea } from "./schema";
 
 const MAX_SEEN = 3000;
-
-async function readJson<T>(file: string, fallback: T): Promise<T> {
-  try {
-    return JSON.parse(await fs.readFile(file, "utf8")) as T;
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === "ENOENT") return fallback;
-    throw err;
-  }
-}
-
-/** Write to a temp file then rename, so a crash never leaves half-written JSON. */
-async function writeJson(file: string, value: unknown): Promise<void> {
-  await fs.mkdir(path.dirname(file), { recursive: true });
-  const tmp = `${file}.${process.pid}.tmp`;
-  await fs.writeFile(tmp, JSON.stringify(value, null, 2) + "\n", "utf8");
-  await fs.rename(tmp, file);
-}
 
 export class IdeaStore {
   constructor(private readonly dir = DATA_DIR) {}

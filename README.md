@@ -14,7 +14,12 @@ Personal brand manager for LinkedIn and Instagram (OI.Dev). Runs at **$0**: free
 | Ideas board: filter, save, mark posted, reject, copy | ✅ |
 | Daily Markdown digest in `digests/` via GitHub Actions | ✅ |
 | AI fallback: Gemini → Groq → (optional) local Ollama | ✅ |
-| Drafting full posts and video scripts | ⏳ next |
+| **Drafts**: LinkedIn post + Instagram caption for text ideas | ✅ |
+| **Video scripts**: 3 hooks, timed beats, on-screen text, shot notes, teleprompter (30/60/90 s) | ✅ |
+| **Carousel content**: slide-by-slide text with layouts, ready for rendering or Canva | ✅ |
+| Rewrite any one section, with an optional instruction ("shorter", "more personal") | ✅ |
+| Captions from your video transcript, after recording | ✅ |
+| Quality checks: length limits, "see more" cut-off, Markdown, placeholders, AI-sounding words, unsourced numbers, script timing | ✅ |
 | Carousel / banner rendering | ⏳ |
 | Profile writer and audit | ⏳ (manual drafts in `profile/drafts/`) |
 | Publishing, analytics | ⏳ |
@@ -50,7 +55,7 @@ Fix or replace any broken feeds in `config/feeds.json`.
 ```bash
 npm run dev
 ```
-Open http://localhost:3000 and press **Generate ideas now**. Or from the terminal:
+Open http://localhost:3000 and press **Generate ideas now**. On any idea, press **Draft it** (choose 30/60/90 s for videos) to get a full draft you can edit, rewrite section by section, and copy out. Or from the terminal:
 ```bash
 npm run ideas
 ```
@@ -68,6 +73,7 @@ Because GitHub and your laptop both write `data/ideas.json`, **`git pull` before
 
 ## Customize
 
+- **Your voice:** paste 5–10 of your real posts into `profile/voice.md` and fill in "Words I never use". Drafts copy your style from it, and the quality check flags those words.
 - **About you, voice, pillars, updates, brand:** `profile/*.md` (or the *Knowledge base* page in the app). The more specific these are, especially `voice.md` with real past posts and `updates.md` with real results, the better the ideas.
 - **News sources and keywords:** `config/feeds.json`. Each feed has a pillar; each pillar has keywords used to pre-filter news before the AI sees it (saves free-tier quota).
 
@@ -94,6 +100,7 @@ src/lib/kb.ts       knowledge base read/write
 src/lib/llm/        Gemini + OpenAI-compatible (Groq, Ollama) providers with fallback
 src/lib/news/       feed config, fetching, dedupe, relevance scoring
 src/lib/ideas/      prompt, AI output validation, storage, digest
+src/lib/drafts/     draft formats, prompts, section rewrites, quality checks, storage
 src/lib/pipeline.ts the daily job
 scripts/            CLI entry points
 config/feeds.json   news sources and keywords

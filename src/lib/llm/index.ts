@@ -86,3 +86,31 @@ export function extractJson(text: string): unknown {
   if (start !== -1 && end > start) return JSON.parse(trimmed.slice(start, end + 1));
   throw new Error("No JSON object found in the AI response");
 }
+
+/**
+ * Asks each provider in turn for JSON and parses it with `parse`. A provider that errors,
+ * or returns output that `parse` rejects, hands over to the next one.
+ */
+export async function generateJsonWithFallback<T>(
+  providers: LlmProvider[],
+  req: Omit<LlmRequest, "json">,
+  parse: (raw: unknown) => T,
+): Promise<{ value: T; generatedBy: string }> {
+  if (providers.length === 0) {
+    throw new LlmError(
+      "No AI provider is configured. Add GEMINI_API_KEY and/or GROQ_API_KEY to .env.local (see .env.example).",
+      "none",
+    );
+  }
+  const errors: string[] = [];
+  for (const p of providers) {
+    const label = `${p.name}/${p.model}`;
+    try {
+      const res = await p.generate({ ...req, json: true });
+      return { value: parse(extractJson(res.text)), generatedBy: label };
+    } catch (err) {
+      errors.push(`${label}: ${(err as Error).message}`);
+    }
+  }
+  throw new LlmError(`All AI providers failed:\n- ${errors.join("\n- ")}`, "all");
+}

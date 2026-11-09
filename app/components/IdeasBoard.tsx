@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { IdeaStatus, StoredIdea } from "@/src/lib/ideas/schema";
 
@@ -27,8 +29,17 @@ function ideaToText(i: StoredIdea): string {
   ].join("\n");
 }
 
-export function IdeasBoard({ initialIdeas }: { initialIdeas: StoredIdea[] }) {
+export function IdeasBoard({
+  initialIdeas,
+  draftsByIdea,
+}: {
+  initialIdeas: StoredIdea[];
+  draftsByIdea: Record<string, string>;
+}) {
+  const router = useRouter();
   const [ideas, setIdeas] = useState(initialIdeas);
+  const [drafting, setDrafting] = useState<string | null>(null);
+  const [videoLength, setVideoLength] = useState<Record<string, number>>({});
   const [status, setStatus] = useState<(typeof STATUS_FILTERS)[number]["id"]>("active");
   const [format, setFormat] = useState<(typeof FORMAT_FILTERS)[number]>("all");
   const [running, setRunning] = useState(false);
@@ -80,6 +91,24 @@ export function IdeasBoard({ initialIdeas }: { initialIdeas: StoredIdea[] }) {
     if (!res.ok) {
       setIdeas(before);
       setMessage({ kind: "error", text: "Couldn't update that idea. Is the app still running?" });
+    }
+  }
+
+  async function draft(idea: StoredIdea) {
+    setDrafting(idea.id);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/drafts", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ideaId: idea.id, targetSeconds: idea.format === "video" ? (videoLength[idea.id] ?? 60) : undefined }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
+      router.push(`/drafts/${body.draft.id}`);
+    } catch (err) {
+      setMessage({ kind: "error", text: (err as Error).message });
+      setDrafting(null);
     }
   }
 
@@ -163,6 +192,28 @@ export function IdeasBoard({ initialIdeas }: { initialIdeas: StoredIdea[] }) {
                 </div>
               )}
               <div className="actions">
+                {draftsByIdea[i.id] ? (
+                  <Link className="btn btn-small btn-primary" href={`/drafts/${draftsByIdea[i.id]}`}>
+                    Open draft
+                  </Link>
+                ) : (
+                  <span className="idea-draft">
+                    {i.format === "video" && (
+                      <select
+                        aria-label="Video length"
+                        value={videoLength[i.id] ?? 60}
+                        onChange={(e) => setVideoLength((v) => ({ ...v, [i.id]: Number(e.target.value) }))}
+                      >
+                        <option value={30}>30s</option>
+                        <option value={60}>60s</option>
+                        <option value={90}>90s</option>
+                      </select>
+                    )}
+                    <button className="btn btn-small btn-primary" disabled={drafting !== null} onClick={() => draft(i)}>
+                      {drafting === i.id ? "Writing…" : "Draft it"}
+                    </button>
+                  </span>
+                )}
                 {i.status !== "saved" && (
                   <button className="btn btn-small" onClick={() => setIdeaStatus(i.id, "saved")}>Save</button>
                 )}

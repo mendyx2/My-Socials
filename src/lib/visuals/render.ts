@@ -32,7 +32,9 @@ const CHROMIUM_PACK_URL =
   process.env.CHROMIUM_PACK_URL ?? "https://github.com/Sparticuz/chromium/releases/download/v153.0.0/chromium-v153.0.0-pack.x64.tar";
 
 async function launch(): Promise<Browser> {
-  if (wantsNetlify() || process.env.RENDER_BROWSER === "serverless") {
+  // RENDER_BROWSER: "serverless" | "local" overrides the automatic choice.
+  const serverless = process.env.RENDER_BROWSER ? process.env.RENDER_BROWSER === "serverless" : wantsNetlify();
+  if (serverless) {
     const [{ chromium }, sparticuz] = await Promise.all([import("playwright-core"), import("@sparticuz/chromium-min")]);
     const Chromium = sparticuz.default;
     return chromium.launch({ executablePath: await Chromium.executablePath(CHROMIUM_PACK_URL), args: Chromium.args, headless: true });

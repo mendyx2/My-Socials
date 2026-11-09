@@ -1,19 +1,19 @@
 import { z } from "zod";
 import { MEDIA_KINDS, MediaStore } from "@/src/lib/media/store";
 import { errorResponse } from "@/src/lib/server/errors";
-import { rejectIfNotLocal } from "@/src/lib/server/local-only";
+import { rejectIfUnauthorized } from "@/src/lib/server/guard";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  const denied = rejectIfNotLocal(req);
+  const denied = rejectIfUnauthorized(req);
   if (denied) return denied;
   return Response.json(await new MediaStore().read());
 }
 
 /** Upload one or more images (multipart form: "files", optional "kind" and "boardId"). */
 export async function POST(req: Request) {
-  const denied = rejectIfNotLocal(req);
+  const denied = rejectIfUnauthorized(req);
   if (denied) return denied;
   try {
     const form = await req.formData();

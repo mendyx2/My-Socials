@@ -234,3 +234,10 @@ The tool writes and audits my profiles from the knowledge base. **I paste the re
 8. ~~Brand look~~ **Taken from my banner** (see `profile/brand.md`). Still open: build templates vs. Canva free.
 9. ~~Profile goal~~ **Decided: book a call.** Still open: which free booking tool.
 10. **Also open to freelance, contract and full-time roles.** LinkedIn must serve clients *and* recruiters. Still open: "Open to work" recruiters-only or public, and whether to add job-lead and CV features.
+
+---
+
+## Update (Nov 2026): hosting decided
+- **Netlify** (free plan, commercial use allowed) chosen over Vercel (free plan is non-commercial only).
+- Storage: Netlify Blobs (no extra service). Login: single password + signed cookie.
+- Watch-outs: 300 credits/month (deploys ~15 each), 60 s server limit, ~6 MB request/response limits (handled by shrinking uploads, building ZIPs in the browser, JPEG-based PDFs).

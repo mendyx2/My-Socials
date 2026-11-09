@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { regenerateDraftSection } from "@/src/lib/drafts/service";
 import { errorResponse } from "@/src/lib/server/errors";
-import { rejectIfNotLocal } from "@/src/lib/server/local-only";
+import { rejectIfUnauthorized } from "@/src/lib/server/guard";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -9,7 +9,7 @@ export const maxDuration = 120;
 const Body = z.object({ section: z.string().min(1), instruction: z.string().max(500).optional() });
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const denied = rejectIfNotLocal(req);
+  const denied = rejectIfUnauthorized(req);
   if (denied) return denied;
   const { id } = await ctx.params;
   try {

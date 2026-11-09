@@ -55,3 +55,9 @@ Details and reasoning: see `PLAN.md`.
 - Lead tracking: who booked a call and which post they came from (clients **and** recruiters).
 - Job leads: free job feeds (e.g. remote job board RSS/APIs, "Who is hiring" threads) filtered for Flutter / frontend / AI automation roles. LinkedIn job listings have no free API, so no LinkedIn job scraping.
 - CV / cover letter tailoring per role from the knowledge base.
+
+## Hosting (built)
+- Runs on Netlify's free plan, usable from a phone (installable to the home screen).
+- Password login with a 30-day session; refuses to run online without a password.
+- Data and images in Netlify Blobs; `npm run sync -- push|pull` copies between laptop and cloud.
+- Daily ideas job writes straight into the hosted app (no commits, so no deploy credits used).

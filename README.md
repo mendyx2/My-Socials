@@ -85,6 +85,58 @@ Open http://localhost:3000 and press **Generate ideas now**. On any idea, press 
 npm run ideas
 ```
 
+## Put it online so you can use it on your phone (Netlify, free)
+
+The same app runs on Netlify's free plan. Your data and images are kept in Netlify Blobs (private storage that only the app can read), and a password protects everything.
+
+**1. Deploy**
+1. Make sure this repo is **private**, and that this work is on the branch Netlify will deploy (usually `main`).
+2. On [netlify.com](https://www.netlify.com), sign up with GitHub → **Add new project → Import an existing project** → GitHub → pick this repo. Netlify reads `netlify.toml`, so leave the build settings as they are.
+
+**2. Settings** (Netlify → your site → **Site configuration → Environment variables**)
+
+| Name | Value |
+|---|---|
+| `APP_PASSWORD` | A password of at least 12 characters. You type it once per device. |
+| `STORAGE` | `netlify` |
+| `GEMINI_API_KEY` | your key (as on your laptop) |
+| `GROQ_API_KEY` | your backup key (optional) |
+
+Then **Deploys → Trigger deploy**, because settings only apply after a new deploy.
+
+**3. Copy your knowledge base and data up** (from your laptop, once)
+1. Netlify → **Site configuration → Site details** → copy the **Site ID**.
+2. Netlify → your avatar → **User settings → Applications → Personal access tokens** → new token.
+3. Add both to `.env.local`:
+   ```
+   NETLIFY_SITE_ID=...
+   NETLIFY_AUTH_TOKEN=...
+   ```
+4. Preview, then copy (add `--media` to include library images):
+   ```bash
+   npm run sync -- push
+   ```
+   ```bash
+   npm run sync -- push --yes
+   ```
+   `npm run sync -- pull --yes` copies everything back down, which also makes a good backup.
+
+**4. On your phone**: open `https://<your-site>.netlify.app`, log in, then **Share → Add to Home Screen** (iPhone) or **⋮ → Install app** (Android). It opens like an app.
+
+**5. Daily ideas while hosted**: add `NETLIFY_SITE_ID` and `NETLIFY_AUTH_TOKEN` as GitHub repository secrets too (next to the AI keys). The daily job then writes ideas straight into the app instead of committing files.
+
+### Free-plan limits (Netlify, late 2026; check your usage page)
+- The free plan gives **300 credits a month**. Each **production deploy costs about 15**, so avoid pushing code often. `netlify.toml` skips deploys when only data or docs change. Bandwidth and function time also use credits; normal personal use should stay well under the limit.
+- If credits run out, Netlify **pauses the site until next month**. Your data is kept. See **Netlify → Usage**.
+- Server tasks get up to 60 seconds. AI writing and rendering fit in that.
+- The **first image render after a deploy is slower** (about 20–40 s), because the cloud browser (~60 MB) downloads itself. Later renders are quick.
+- Uploads: big photos are shrunk in your browser (to 2160 px JPEG) before upload, to fit the hosting request limit.
+
+### If something's wrong
+- *"This app is online without a password"*: set `APP_PASSWORD` and redeploy.
+- *Login keeps asking*: check the device allows cookies. Changing `APP_PASSWORD` logs out every device, which is intended.
+- *Rendering fails online*: Netlify → **Logs → Functions** shows the error. You can always render on your laptop and `sync` it.
+
 ## Daily ideas on GitHub (optional, free)
 
 1. In the repo on GitHub: **Settings → Secrets and variables → Actions → New repository secret**. Add `GEMINI_API_KEY` and `GROQ_API_KEY`.
@@ -106,7 +158,7 @@ Because GitHub and your laptop both write `data/ideas.json`, **`git pull` before
 
 ## Safety
 
-- The app has **no login**. API routes only answer requests to `localhost`. Don't deploy it publicly as is.
+- **Login**: with `APP_PASSWORD` set, every page and API needs a signed, HttpOnly session cookie (30 days). Without a password, the app only answers on `localhost`; online without a password, it refuses everything. Writes from other websites are refused.
 - News text is treated as untrusted. The AI is told to ignore instructions inside articles, and only links to articles it was actually given are kept, so it can't invent sources.
 - The AI is told never to invent statistics or results. Still, **always review before posting.**
 - Free AI tiers may use prompts to improve their models. Don't put anything confidential in `profile/`.
@@ -131,6 +183,8 @@ src/lib/drafts/     draft formats, prompts, section rewrites, quality checks, st
 src/lib/profiles/   profile writer, checks, setup checklist, versions
 src/lib/visuals/    HTML templates + headless-browser renderer (PNG/PDF/ZIP)
 src/lib/media/      image library, storyboards, inspiration for the AI
+src/lib/storage/    files locally / Netlify Blobs when hosted
+src/lib/auth.ts     password login and session cookies
 src/lib/pipeline.ts the daily job
 scripts/            CLI entry points
 config/feeds.json   news sources and keywords

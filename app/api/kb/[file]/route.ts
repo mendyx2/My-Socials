@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { isKbFile, readKbFile, writeKbFile } from "@/src/lib/kb";
-import { rejectIfNotLocal } from "@/src/lib/server/local-only";
+import { rejectIfUnauthorized } from "@/src/lib/server/guard";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request, ctx: { params: Promise<{ file: string }> }) {
-  const denied = rejectIfNotLocal(req);
+  const denied = rejectIfUnauthorized(req);
   if (denied) return denied;
   const { file } = await ctx.params;
   if (!isKbFile(file)) return Response.json({ error: "Unknown file" }, { status: 404 });
@@ -13,7 +13,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ file: string }>
 }
 
 export async function PUT(req: Request, ctx: { params: Promise<{ file: string }> }) {
-  const denied = rejectIfNotLocal(req);
+  const denied = rejectIfUnauthorized(req);
   if (denied) return denied;
   const { file } = await ctx.params;
   if (!isKbFile(file)) return Response.json({ error: "Unknown file" }, { status: 404 });

@@ -1,4 +1,4 @@
-import { Library } from "../components/Library";
+import { Library } from "@/app/components/Library";
 import { MediaStore } from "@/src/lib/media/store";
 
 export const dynamic = "force-dynamic";

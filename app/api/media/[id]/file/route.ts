@@ -1,9 +1,9 @@
 import { MediaStore } from "@/src/lib/media/store";
 import { errorResponse } from "@/src/lib/server/errors";
-import { rejectIfNotLocal } from "@/src/lib/server/local-only";
+import { rejectIfUnauthorized } from "@/src/lib/server/guard";
 
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const denied = rejectIfNotLocal(req);
+  const denied = rejectIfUnauthorized(req);
   if (denied) return denied;
   try {
     const { item, data } = await new MediaStore().fileOf((await ctx.params).id);

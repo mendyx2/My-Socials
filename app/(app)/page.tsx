@@ -1,6 +1,6 @@
 import { DraftStore } from "@/src/lib/drafts/store";
 import { IdeaStore } from "@/src/lib/ideas/store";
-import { IdeasBoard } from "./components/IdeasBoard";
+import { IdeasBoard } from "@/app/components/IdeasBoard";
 
 export const dynamic = "force-dynamic";
 

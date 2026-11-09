@@ -221,8 +221,24 @@ type Env = Record<string, string | undefined>;
 /** Hosted on Netlify, or a script/GitHub Action that was given Netlify credentials. */
 export function wantsNetlify(env: Env = process.env): boolean {
   if (env.STORAGE === "file") return false;
-  return env.STORAGE === "netlify" || !!env.NETLIFY_BLOBS_CONTEXT || (!!env.NETLIFY && !!env.SITE_ID && !!env.DEPLOY_ID);
+  return (
+    env.STORAGE === "netlify" ||
+    !!env.NETLIFY_BLOBS_CONTEXT ||
+    (!!env.NETLIFY && !!env.SITE_ID && !!env.DEPLOY_ID) ||
+    (env === process.env && !!(globalThis as { netlifyBlobsContext?: unknown }).netlifyBlobsContext)
+  );
 }
+
+/**
+ * fetch for the Blobs client. Inside Next.js, the library's `response.body.cancel()` (called on
+ * every 404, i.e. any key that doesn't exist yet) never settles, which froze pages. Reading each
+ * response fully and returning a fresh copy avoids that. no-store keeps Next.js from caching.
+ */
+export const blobsFetch: typeof fetch = async (input, init) => {
+  const res = await fetch(input, { ...init, cache: "no-store" });
+  const body = res.status === 204 || res.status === 304 || init?.method?.toUpperCase() === "HEAD" ? null : await res.arrayBuffer();
+  return new Response(body && body.byteLength ? body : null, { status: res.status, statusText: res.statusText, headers: res.headers });
+};
 
 export async function createNetlifyStorage(env: Env = process.env): Promise<NetlifyBlobStorage> {
   const { getStore } = await import("@netlify/blobs");
@@ -235,7 +251,7 @@ export async function createNetlifyStorage(env: Env = process.env): Promise<Netl
           ...(env.NETLIFY_BLOBS_API_URL ? { apiURL: env.NETLIFY_BLOBS_API_URL } : {}),
         }
       : {};
-  return new NetlifyBlobStorage(getStore({ name: BLOB_STORE_NAME, consistency: "strong", ...explicit }));
+  return new NetlifyBlobStorage(getStore({ name: BLOB_STORE_NAME, consistency: "strong", fetch: blobsFetch, ...explicit }));
 }
 
 let current: Promise<Storage> | null = null;

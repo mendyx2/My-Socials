@@ -1,0 +1,21 @@
+# Netlify settings for My Socials. Netlify detects Next.js and installs its adapter automatically.
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+  # Each production deploy costs free-plan credits (about 15 of 300 a month), so skip
+  # deploys when a push only touches data, digests or docs. Exit 0 = skip, non-zero = build.
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- . ':(exclude)data' ':(exclude)digests' ':(exclude)docs' ':(exclude)profile' ':(exclude)*.md'"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NEXT_TELEMETRY_DISABLED = "1"
+
+# Security headers for every page.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "same-origin"
+    X-Robots-Tag = "noindex, nofollow"

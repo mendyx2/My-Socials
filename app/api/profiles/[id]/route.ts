@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ProfileContentSchema } from "@/src/lib/profiles/schema";
 import { addLaunchPostsToIdeas, duplicateProfile, rewriteProfileSection, updateProfile } from "@/src/lib/profiles/service";
 import { errorResponse } from "@/src/lib/server/errors";
-import { rejectIfNotLocal } from "@/src/lib/server/local-only";
+import { rejectIfUnauthorized } from "@/src/lib/server/guard";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -12,7 +12,7 @@ const Selected = z.object({ headline: z.number().int().min(0), bio: z.number().i
 const Patch = z.object({ content: ProfileContentSchema.optional(), selected: Selected.optional(), status: z.enum(["draft", "live"]).optional() });
 
 export async function PATCH(req: Request, ctx: Ctx) {
-  const denied = rejectIfNotLocal(req);
+  const denied = rejectIfUnauthorized(req);
   if (denied) return denied;
   const { id } = await ctx.params;
   try {
@@ -29,7 +29,7 @@ const Action = z.discriminatedUnion("action", [
 ]);
 
 export async function POST(req: Request, ctx: Ctx) {
-  const denied = rejectIfNotLocal(req);
+  const denied = rejectIfUnauthorized(req);
   if (denied) return denied;
   const { id } = await ctx.params;
   try {

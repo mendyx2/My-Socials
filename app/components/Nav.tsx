@@ -11,7 +11,7 @@ const LINKS = [
   { href: "/knowledge", label: "Knowledge base" },
 ];
 
-export function Nav() {
+export function Nav({ canLogOut = false }: { canLogOut?: boolean }) {
   const pathname = usePathname();
   return (
     <nav className="nav" aria-label="Main">
@@ -20,6 +20,18 @@ export function Nav() {
           {l.label}
         </Link>
       ))}
+      {canLogOut && (
+        <button
+          type="button"
+          className="nav-logout"
+          onClick={async () => {
+            await fetch("/api/auth/logout", { method: "POST" });
+            window.location.href = "/login";
+          }}
+        >
+          Log out
+        </button>
+      )}
     </nav>
   );
 }

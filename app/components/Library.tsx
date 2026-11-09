@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { Board, MediaItem, MediaKind } from "@/src/lib/media/store";
+import { MAX_UPLOAD_BYTES, shrinkForUpload } from "./shrink-image";
 import { api } from "./ui";
 
 const KIND_LABEL: Record<MediaKind, string> = { inspiration: "✨ Inspiration", storyboard: "🎬 Storyboard", photo: "📷 My photo" };
@@ -15,21 +16,37 @@ export function Uploader(props: { kind: MediaKind; boardId?: string; onDone: (li
   const [busy, setBusy] = useState(false);
   const [over, setOver] = useState(false);
 
+  const [progress, setProgress] = useState("");
+
+  /** One image per request (hosting caps request size), shrinking big photos first. */
   async function upload(files: FileList | File[]) {
     const list = [...files];
     if (!list.length) return;
     setBusy(true);
-    const form = new FormData();
-    list.forEach((f) => form.append("files", f));
-    form.append("kind", props.kind);
-    if (props.boardId) form.append("boardId", props.boardId);
+    const errors: string[] = [];
+    let latest: Lib | null = null;
     try {
-      const res = await fetch("/api/media", { method: "POST", body: form });
-      const body = await res.json();
-      if (body.items) props.onDone({ items: body.items, boards: body.boards }, body.errors ?? (res.ok ? [] : [body.error]));
-      else props.onDone({ items: [], boards: [] }, [body.error ?? `HTTP ${res.status}`]);
+      for (const [i, original] of list.entries()) {
+        setProgress(list.length > 1 ? `${i + 1}/${list.length}` : "");
+        const file = await shrinkForUpload(original);
+        if (file.size > MAX_UPLOAD_BYTES) {
+          errors.push(`"${original.name}" is still over 5 MB after shrinking.`);
+          continue;
+        }
+        const form = new FormData();
+        form.append("files", file);
+        form.append("kind", props.kind);
+        if (props.boardId) form.append("boardId", props.boardId);
+        const res = await fetch("/api/media", { method: "POST", body: form });
+        const body = await res.json().catch(() => ({}));
+        if (body.items) latest = { items: body.items, boards: body.boards };
+        if (body.errors?.length) errors.push(...body.errors);
+        else if (!res.ok) errors.push(body.error ?? `"${original.name}": HTTP ${res.status}`);
+      }
+      props.onDone(latest ?? { items: [], boards: [] }, errors);
     } finally {
       setBusy(false);
+      setProgress("");
       if (input.current) input.current.value = "";
     }
   }
@@ -50,9 +67,9 @@ export function Uploader(props: { kind: MediaKind; boardId?: string; onDone: (li
     >
       <input ref={input} type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden onChange={(e) => e.target.files && upload(e.target.files)} />
       <button type="button" className="btn btn-small" disabled={busy} onClick={() => input.current?.click()}>
-        {busy ? "Uploading…" : "Choose images"}
+        {busy ? `Uploading… ${progress}` : "Choose images"}
       </button>
-      <span className="field-hint">or drop them here · PNG, JPEG, WebP, GIF · max 10 MB each</span>
+      <span className="field-hint">or drop them here · PNG, JPEG, WebP, GIF · big photos are shrunk automatically</span>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { KnowledgeEditor } from "../components/KnowledgeEditor";
+import { KnowledgeEditor } from "@/app/components/KnowledgeEditor";
 
 export default function KnowledgePage() {
   return (

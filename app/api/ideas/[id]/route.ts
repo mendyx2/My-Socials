@@ -1,12 +1,12 @@
 import { z } from "zod";
 import { STATUSES } from "@/src/lib/ideas/schema";
 import { IdeaStore } from "@/src/lib/ideas/store";
-import { rejectIfNotLocal } from "@/src/lib/server/local-only";
+import { rejectIfUnauthorized } from "@/src/lib/server/guard";
 
 const PatchSchema = z.object({ status: z.enum(STATUSES).optional(), notes: z.string().max(5000).optional() });
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const denied = rejectIfNotLocal(req);
+  const denied = rejectIfUnauthorized(req);
   if (denied) return denied;
   const { id } = await ctx.params;
   const parsed = PatchSchema.safeParse(await req.json().catch(() => null));

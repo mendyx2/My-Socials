@@ -1,4 +1,4 @@
-import { ProfileStudio } from "../components/ProfileStudio";
+import { ProfileStudio } from "@/app/components/ProfileStudio";
 import { profileOverview } from "@/src/lib/profiles/service";
 
 export const dynamic = "force-dynamic";

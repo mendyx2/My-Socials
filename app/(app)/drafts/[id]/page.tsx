@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { DraftEditor } from "../../components/DraftEditor";
+import { DraftEditor } from "@/app/components/DraftEditor";
 import { parseBannedWords } from "@/src/lib/drafts/checks";
 import { DraftStore } from "@/src/lib/drafts/store";
 import { readKbFile } from "@/src/lib/kb";

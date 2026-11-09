@@ -22,6 +22,9 @@ jobs:
   ideas:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      # Job-level so step "if:" conditions can see it (secrets can't be used in "if:" directly).
+      HOSTED_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
     steps:
       - uses: actions/checkout@v4
 
@@ -40,9 +43,21 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GROQ_MODEL: ${{ vars.GROQ_MODEL || 'openai/gpt-oss-120b' }}
           IDEAS_PER_DAY: ${{ inputs.count || vars.IDEAS_PER_DAY || '5' }}
-        run: npm run ideas
+          # Hosted on Netlify? Then ideas go straight into the app's Netlify storage.
+          # (Set both secrets; see README "Put it online".)
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: |
+          if [ -n "$NETLIFY_SITE_ID" ] && [ -n "$NETLIFY_AUTH_TOKEN" ]; then
+            export STORAGE=netlify
+            echo "Saving ideas to Netlify storage."
+          fi
+          npm run ideas
 
+      # Only when NOT hosted: commit the files to the repo instead.
+      # (Never commit when hosted: each push would trigger a Netlify deploy and use free-plan credits.)
       - name: Commit ideas and digest
+        if: ${{ env.HOSTED_SITE_ID == '' }}
         run: |
           git config user.name "my-socials-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

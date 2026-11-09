@@ -3,13 +3,13 @@ import { DRAFT_STATUSES, DraftContentSchema } from "@/src/lib/drafts/schema";
 import { NotFoundError, warningsFor } from "@/src/lib/drafts/service";
 import { DraftStore } from "@/src/lib/drafts/store";
 import { errorResponse } from "@/src/lib/server/errors";
-import { rejectIfNotLocal } from "@/src/lib/server/local-only";
+import { rejectIfUnauthorized } from "@/src/lib/server/guard";
 
 export const dynamic = "force-dynamic";
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function GET(req: Request, ctx: Ctx) {
-  const denied = rejectIfNotLocal(req);
+  const denied = rejectIfUnauthorized(req);
   if (denied) return denied;
   const { id } = await ctx.params;
   const draft = await new DraftStore().get(id);
@@ -24,7 +24,7 @@ const PatchSchema = z.object({
 });
 
 export async function PATCH(req: Request, ctx: Ctx) {
-  const denied = rejectIfNotLocal(req);
+  const denied = rejectIfUnauthorized(req);
   if (denied) return denied;
   const { id } = await ctx.params;
   try {
@@ -39,7 +39,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
 }
 
 export async function DELETE(req: Request, ctx: Ctx) {
-  const denied = rejectIfNotLocal(req);
+  const denied = rejectIfUnauthorized(req);
   if (denied) return denied;
   const { id } = await ctx.params;
   await new DraftStore().delete(id);

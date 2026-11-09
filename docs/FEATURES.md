@@ -28,6 +28,9 @@ Details and reasoning: see `PLAN.md`.
 - Recruiter search optimisation: job-title keywords in headline and experience, skills list matched to the roles I want.
 - Reminder checklist for LinkedIn's "Open to work" setting (recruiters-only vs public; see PLAN.md).
 - Version history of bios. **Applied by copy-paste** (no API exists for profile edits).
+- Launch posts for brand-new accounts, sent to the ideas board.
+- Setup checklist and "out of date" warning when `about.md`, `pillars.md` or `updates.md` change after the live version.
+- _Built (stage 3)._ Later: audit of a pasted live profile.
 
 ## 5. Planning & publishing
 - Content calendar: what goes out when, on which platform, mix of pillars and formats.

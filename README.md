@@ -21,7 +21,10 @@ Personal brand manager for LinkedIn and Instagram (OI.Dev). Runs at **$0**: free
 | Captions from your video transcript, after recording | ✅ |
 | Quality checks: length limits, "see more" cut-off, Markdown, placeholders, AI-sounding words, unsourced numbers, script timing | ✅ |
 | Carousel / banner rendering | ⏳ |
-| Profile writer and audit | ⏳ (manual drafts in `profile/drafts/`) |
+| **Profile writer**: LinkedIn headline options, About, experience, skills, Featured, custom URL, Open to work, banner text; Instagram bio options, name field, usernames, link in bio, highlights, pinned posts | ✅ |
+| **Launch posts** for new accounts, sent to the Ideas board with one click | ✅ |
+| Profile checks: limits, recruiter keywords, book-a-call CTA, open-to-work line, consistency across platforms, placeholders | ✅ |
+| Setup checklist (18 steps), version history, "mark as live", out-of-date warning when your knowledge base changes | ✅ |
 | Publishing, analytics | ⏳ |
 
 ## Setup (about 10 minutes)
@@ -55,7 +58,7 @@ Fix or replace any broken feeds in `config/feeds.json`.
 ```bash
 npm run dev
 ```
-Open http://localhost:3000 and press **Generate ideas now**. On any idea, press **Draft it** (choose 30/60/90 s for videos) to get a full draft you can edit, rewrite section by section, and copy out. Or from the terminal:
+Open http://localhost:3000 and press **Generate ideas now**. On any idea, press **Draft it** (choose 30/60/90 s for videos) to get a full draft you can edit, rewrite section by section, and copy out. Open **Profiles** and press **Write my profiles** to set up both accounts. Or from the terminal:
 ```bash
 npm run ideas
 ```
@@ -101,6 +104,7 @@ src/lib/llm/        Gemini + OpenAI-compatible (Groq, Ollama) providers with fal
 src/lib/news/       feed config, fetching, dedupe, relevance scoring
 src/lib/ideas/      prompt, AI output validation, storage, digest
 src/lib/drafts/     draft formats, prompts, section rewrites, quality checks, storage
+src/lib/profiles/   profile writer, checks, setup checklist, versions
 src/lib/pipeline.ts the daily job
 scripts/            CLI entry points
 config/feeds.json   news sources and keywords

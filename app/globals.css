@@ -133,3 +133,27 @@ select { padding: 7px 10px; }
   .rewrite { min-width: 0; width: 100%; }
   .rewrite input { max-width: none; }
 }
+
+/* ---------- profiles ---------- */
+fieldset.plain { border: 0; padding: 0; margin: 0; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+fieldset.plain:disabled textarea, fieldset.plain:disabled input { opacity: 0.85; }
+.platform { font-family: var(--serif); color: var(--accent-strong); font-size: 1.4rem; margin: 8px 0 0; }
+.version-bar { gap: 12px; }
+.version-bar .draft-actions { justify-content: flex-start; }
+.options { display: flex; flex-direction: column; gap: 10px; }
+.option { border: 1px solid var(--border); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.option.chosen { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.option textarea { width: 100%; background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font: inherit; resize: vertical; }
+.option-pick { display: flex; gap: 8px; align-items: center; width: 100%; color: var(--muted); font-size: 0.85rem; }
+.option-pick .count { margin-left: auto; }
+.label { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; margin: 6px 0 0; }
+.plain-list { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.write-box { gap: 12px; align-items: flex-start; }
+.write-box .field { width: 100%; }
+.checklist h2 { margin: 0; font-size: 1.1rem; }
+.checklist progress { width: 100%; accent-color: var(--accent); }
+.checklist ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; max-height: 70vh; overflow: auto; }
+.checklist label { display: flex; gap: 8px; align-items: flex-start; font-size: 0.88rem; cursor: pointer; }
+.checklist input { margin-top: 4px; accent-color: var(--accent); }
+.checklist .tag { font-size: 0.7rem; }
+.card > .btn, .beat > .btn, .option > .btn, .card > div > .btn { align-self: flex-start; }

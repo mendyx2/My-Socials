@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { api, Field, HashtagField, LinesField, Section } from "./ui";
 import { assembleInstagram, assembleLinkedIn, checkDraft, type DraftWarning } from "@/src/lib/drafts/checks";
 import {
   DRAFT_STATUSES,
@@ -19,90 +20,6 @@ import {
 } from "@/src/lib/drafts/schema";
 
 const FORMAT_LABEL = { text: "📝 Text post", carousel: "🖼️ Carousel", video: "🎥 Video" } as const;
-
-async function api<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, { ...init, headers: { "content-type": "application/json", ...init?.headers } });
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
-  return body as T;
-}
-
-/* ---------- small field helpers ---------- */
-
-function Field(props: { label: string; value: string; onChange: (v: string) => void; rows?: number; max?: number; hint?: string }) {
-  const { label, value, onChange, rows, max, hint } = props;
-  const over = max !== undefined && value.length > max;
-  return (
-    <label className="field">
-      <span className="field-label">
-        {label}
-        {max !== undefined && <span className={over ? "count over" : "count"}>{value.length}/{max}</span>}
-      </span>
-      {rows ? (
-        <textarea value={value} rows={rows} onChange={(e) => onChange(e.target.value)} />
-      ) : (
-        <input value={value} onChange={(e) => onChange(e.target.value)} />
-      )}
-      {hint && <span className="field-hint">{hint}</span>}
-    </label>
-  );
-}
-
-/** Edits hashtags as free text; commits a clean list when you leave the field. */
-function HashtagField({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
-  const joined = value.join(" ");
-  const [text, setText] = useState(joined);
-  useEffect(() => setText(joined), [joined]);
-  const commit = () =>
-    onChange([...new Set(text.split(/[\s,]+/).map((t) => t.replace(/^#+/, "")).filter(Boolean).map((t) => `#${t}`))]);
-  return (
-    <label className="field">
-      <span className="field-label">
-        Hashtags <span className={value.length > 5 ? "count over" : "count"}>{value.length}</span>
-      </span>
-      <input value={text} onChange={(e) => setText(e.target.value)} onBlur={commit} placeholder="#Flutter #SmallBusiness" />
-    </label>
-  );
-}
-
-function Section(props: {
-  title: string;
-  section?: string;
-  busy: string | null;
-  onRewrite?: (section: string, instruction: string) => void;
-  warnings: DraftWarning[];
-  children: React.ReactNode;
-}) {
-  const { title, section, busy, onRewrite, warnings, children } = props;
-  const [instruction, setInstruction] = useState("");
-  const mine = warnings.filter((w) => w.section === section);
-  return (
-    <section className="card section">
-      <div className="section-head">
-        <h2>{title}</h2>
-        {section && onRewrite && (
-          <div className="rewrite">
-            <input
-              aria-label={`Instruction for rewriting ${title}`}
-              placeholder="Optional: e.g. shorter, more personal"
-              value={instruction}
-              onChange={(e) => setInstruction(e.target.value)}
-            />
-            <button className="btn btn-small" disabled={busy !== null} onClick={() => onRewrite(section, instruction)}>
-              {busy === section ? "Rewriting…" : "↻ Rewrite"}
-            </button>
-          </div>
-        )}
-      </div>
-      {mine.map((w, i) => (
-        <p key={i} className={`inline-warning ${w.level}`}>
-          {w.level === "error" ? "⛔" : "⚠️"} {w.message}
-        </p>
-      ))}
-      {children}
-    </section>
-  );
-}
 
 /* ---------- per-format editors ---------- */
 
@@ -235,12 +152,7 @@ function SlidesEditor({ c, set }: { c: CarouselDraft; set: (c: CarouselDraft) =>
             <Field label="Title" value={s.title} max={140} onChange={(v) => setSlide(i, { title: v })} />
             <Field label="Body" rows={2} value={s.body} onChange={(v) => setSlide(i, { body: v })} />
             {["steps", "checklist", "comparison", "point"].includes(s.layout) && (
-              <Field
-                label="Items (one per line)"
-                rows={3}
-                value={s.items.join("\n")}
-                onChange={(v) => setSlide(i, { items: v.split("\n").map((x) => x.trim()).filter(Boolean).slice(0, 8) })}
-              />
+              <LinesField label="Items (one per line)" rows={3} max={8} value={s.items} onChange={(v) => setSlide(i, { items: v })} />
             )}
             {(s.layout === "stat" || s.stat) && (
               <div className="two-col">

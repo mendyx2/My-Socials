@@ -55,7 +55,7 @@ const FORMAT_RULES: Record<DraftFormat, (opts: { targetSeconds: number }) => str
   video: ({ targetSeconds }) =>
     `Write a ${targetSeconds}-second talking-to-camera video script. Speaking pace is about 2.5 words per second, so the teleprompter text must be no more than ~${Math.round(targetSeconds * 2.5)} words. Beat seconds must add up to about ${targetSeconds}. She records and edits the video herself; "shot" notes are suggestions for her editing.`,
   carousel: () =>
-    `Write a 6-10 slide infographic carousel. Slide 1 is "cover" (the hook), the last slide is "cta". Each slide has one idea and few words, because it must be readable on a phone. Use "stat" slides only with numbers from the sources, and fill "source". Use "steps"/"checklist"/"comparison" with 2-5 short items.`,
+    `Write a 6-10 slide infographic carousel. Slide 1 is "cover" (the hook), the last slide is "cta". Each slide has one idea and few words, because it must be readable on a phone. Use "stat" slides only with numbers from the sources, and fill "source". Use "steps"/"checklist" with 2-5 short items. For "comparison", set body to "Left vs Right" (e.g. "Manual vs Automated") and write each item as "left side | right side".`,
 };
 
 function ideaBlock(idea: StoredIdea): string {

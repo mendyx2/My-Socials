@@ -1,0 +1,18 @@
+{
+  "brandName": "OI.Dev",
+  "personName": "Wendy Atobor O.",
+  "roles": "Website · Flutter · AI Automation Developer",
+  "tagline": "Code. Automate. Elevate.",
+  "website": "oi-dev-portfolio.vercel.app",
+  "handle": "",
+  "colors": {
+    "background": "#262A35",
+    "backgroundDeep": "#1C1F28",
+    "surface": "rgba(255, 255, 255, 0.06)",
+    "border": "rgba(255, 255, 255, 0.14)",
+    "accent": "#9DBAF4",
+    "accentStrong": "#C4D6FB",
+    "text": "#F2F4F8",
+    "muted": "#A9B1C3"
+  }
+}

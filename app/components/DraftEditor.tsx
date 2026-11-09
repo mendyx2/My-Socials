@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { api, Field, HashtagField, LinesField, Section } from "./ui";
+import { Visuals } from "./Visuals";
 import { assembleInstagram, assembleLinkedIn, checkDraft, type DraftWarning } from "@/src/lib/drafts/checks";
 import {
   DRAFT_STATUSES,
@@ -358,6 +359,16 @@ export function DraftEditor({ initial, banned }: { initial: StoredDraft; banned:
           {content.format === "carousel" && (
             <Section title="Slides" section="slides" {...sectionProps}>
               <SlidesEditor c={content} set={set} />
+            </Section>
+          )}
+          {content.format === "carousel" && (
+            <Section title="Slide images" busy={busy} warnings={[]}>
+              <Visuals
+                endpoint={`/api/drafts/${draft.id}/render`}
+                buttonLabel="Render slides"
+                intro="PNG slides (1080×1350) for an Instagram carousel, and one PDF to upload as a LinkedIn document post. Uses your saved slides and the colors in config/theme.json."
+                beforeRender={async () => (dirty ? save() : true)}
+              />
             </Section>
           )}
           <Section title="LinkedIn" section="linkedin" {...sectionProps}>

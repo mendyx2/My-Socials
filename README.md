@@ -20,7 +20,7 @@ Personal brand manager for LinkedIn and Instagram (OI.Dev). Runs at **$0**: free
 | Rewrite any one section, with an optional instruction ("shorter", "more personal") | ✅ |
 | Captions from your video transcript, after recording | ✅ |
 | Quality checks: length limits, "see more" cut-off, Markdown, placeholders, AI-sounding words, unsourced numbers, script timing | ✅ |
-| Carousel / banner rendering | ⏳ |
+| **Visuals**: carousel slides as PNGs (1080×1350) + a LinkedIn PDF; LinkedIn banner (1584×396) with a photo-safe area + a preview; Instagram highlight covers. Rendered offline with bundled fonts, text auto-shrinks to fit. | ✅ |
 | **Profile writer**: LinkedIn headline options, About, experience, skills, Featured, custom URL, Open to work, banner text; Instagram bio options, name field, usernames, link in bio, highlights, pinned posts | ✅ |
 | **Launch posts** for new accounts, sent to the Ideas board with one click | ✅ |
 | Profile checks: limits, recruiter keywords, book-a-call CTA, open-to-work line, consistency across platforms, placeholders | ✅ |
@@ -54,7 +54,13 @@ npm run feeds:check
 ```
 Fix or replace any broken feeds in `config/feeds.json`.
 
-**5. Run it**
+**5. Install the renderer's browser (once, for images)**
+```bash
+npx playwright install chromium
+```
+If you already have Google Chrome, the tool falls back to it automatically.
+
+**6. Run it**
 ```bash
 npm run dev
 ```
@@ -78,6 +84,7 @@ Because GitHub and your laptop both write `data/ideas.json`, **`git pull` before
 
 - **Your voice:** paste 5–10 of your real posts into `profile/voice.md` and fill in "Words I never use". Drafts copy your style from it, and the quality check flags those words.
 - **About you, voice, pillars, updates, brand:** `profile/*.md` (or the *Knowledge base* page in the app). The more specific these are, especially `voice.md` with real past posts and `updates.md` with real results, the better the ideas.
+- **Visual style:** `config/theme.json` (name, roles, tagline, website, @handle, colors). Rendered images are saved in `renders/` (not committed; re-render any time).
 - **News sources and keywords:** `config/feeds.json`. Each feed has a pillar; each pillar has keywords used to pre-filter news before the AI sees it (saves free-tier quota).
 
 ## Safety
@@ -105,6 +112,7 @@ src/lib/news/       feed config, fetching, dedupe, relevance scoring
 src/lib/ideas/      prompt, AI output validation, storage, digest
 src/lib/drafts/     draft formats, prompts, section rewrites, quality checks, storage
 src/lib/profiles/   profile writer, checks, setup checklist, versions
+src/lib/visuals/    HTML templates + headless-browser renderer (PNG/PDF)
 src/lib/pipeline.ts the daily job
 scripts/            CLI entry points
 config/feeds.json   news sources and keywords

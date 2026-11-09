@@ -5,6 +5,7 @@ import type { DraftWarning } from "@/src/lib/drafts/checks";
 import { checkProfile, SETUP_CHECKLIST } from "@/src/lib/profiles/checks";
 import { LIMITS, type ProfileContent, type ProfileVersion } from "@/src/lib/profiles/schema";
 import { api, CopyButton, Field, LinesField, Section } from "./ui";
+import { Visuals } from "./Visuals";
 
 type Overview = { versions: ProfileVersion[]; checklist: Record<string, boolean>; currentKbHash: string; banned: string[] };
 type Result = { version: ProfileVersion; warnings: DraftWarning[] };
@@ -355,6 +356,22 @@ export function ProfileStudio({ initial }: { initial: Overview }) {
               </Section>
 
             </fieldset>
+
+            <h2 className="platform">Banner and highlight covers</h2>
+            <Section title="Images" busy={busy} warnings={[]}>
+              <Visuals
+                endpoint={`/api/profiles/${current.id}/render`}
+                buttonLabel="Render banner and covers"
+                intro={
+                  <>
+                    LinkedIn banner (1584×396) from the banner text above, with the bottom-left kept clear for your photo. The
+                    &quot;preview&quot; file shows roughly where your photo sits; upload the other one. Plus one Instagram highlight cover per
+                    highlight. Colors and name come from config/theme.json.
+                  </>
+                }
+                beforeRender={async () => (dirty && !readOnly ? save() : true)}
+              />
+            </Section>
 
             <h2 className="platform">Launch posts</h2>
             <Section title="First posts for your new profiles" section="launchPosts" {...sectionProps}>

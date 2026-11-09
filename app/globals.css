@@ -157,3 +157,14 @@ fieldset.plain:disabled textarea, fieldset.plain:disabled input { opacity: 0.85;
 .checklist input { margin-top: 4px; accent-color: var(--accent); }
 .checklist .tag { font-size: 0.7rem; }
 .card > .btn, .beat > .btn, .option > .btn, .card > div > .btn { align-self: flex-start; }
+
+/* ---------- visuals ---------- */
+.visuals { display: flex; flex-direction: column; gap: 10px; }
+.thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.thumb { margin: 0; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.thumb.wide { grid-column: 1 / -1; }
+.thumb img { width: 100%; height: auto; display: block; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-2); }
+.thumb figcaption { display: flex; gap: 6px; font-size: 0.75rem; color: var(--muted); align-items: center; }
+.thumb figcaption span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.thumb figcaption a { text-decoration: none; }
+.muted { color: var(--muted); }

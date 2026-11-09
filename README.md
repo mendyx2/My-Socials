@@ -104,15 +104,14 @@ The same app runs on Netlify's free plan. Your data and images are kept in Netli
 
 Then **Deploys → Trigger deploy**, because settings only apply after a new deploy.
 
-**3. Copy your knowledge base and data up** (from your laptop, once)
+**3. Fill in your knowledge base: in the app** (Knowledge base page)
+A new site starts with the files from this repo's `profile/` folder. Edit and save them in the app, from your phone or laptop. Saved changes are kept in Netlify. Upload images on the **Library** page.
+
+*Optional: copy what you already made on your laptop* (ideas, drafts, library images):
 1. Netlify → **Site configuration → Site details** → copy the **Site ID**.
 2. Netlify → your avatar → **User settings → Applications → Personal access tokens** → new token.
-3. Add both to `.env.local`:
-   ```
-   NETLIFY_SITE_ID=...
-   NETLIFY_AUTH_TOKEN=...
-   ```
-4. Preview, then copy (add `--media` to include library images):
+3. Add both to `.env.local` as `NETLIFY_SITE_ID=...` and `NETLIFY_AUTH_TOKEN=...`
+4. Preview, then copy (add `--media` for library images):
    ```bash
    npm run sync -- push
    ```
@@ -123,7 +122,7 @@ Then **Deploys → Trigger deploy**, because settings only apply after a new dep
 
 **4. On your phone**: open `https://<your-site>.netlify.app`, log in, then **Share → Add to Home Screen** (iPhone) or **⋮ → Install app** (Android). It opens like an app.
 
-**5. Daily ideas while hosted**: add `NETLIFY_SITE_ID` and `NETLIFY_AUTH_TOKEN` as GitHub repository secrets too (next to the AI keys). The daily job then writes ideas straight into the app instead of committing files.
+**5. Daily ideas while hosted**: add `NETLIFY_SITE_ID` and `NETLIFY_AUTH_TOKEN` (see the optional step above for where to find them) as GitHub repository secrets (next to the AI keys). The daily job then writes ideas straight into the app instead of committing files.
 
 ### Free-plan limits (Netlify, late 2026; check your usage page)
 - The free plan gives **300 credits a month**. Each **production deploy costs about 15**, so avoid pushing code often. `netlify.toml` skips deploys when only data or docs change. Bandwidth and function time also use credits; normal personal use should stay well under the limit.

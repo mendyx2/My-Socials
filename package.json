@@ -14,7 +14,9 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "fonts": "tsx scripts/gen-fonts.ts",
-    "sync": "tsx scripts/sync.ts"
+    "sync": "tsx scripts/sync.ts",
+    "prebuild": "tsx scripts/gen-kb-defaults.ts",
+    "kb:defaults": "tsx scripts/gen-kb-defaults.ts"
   },
   "dependencies": {
     "@fontsource/caveat": "^5.3.0",

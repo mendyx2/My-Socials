@@ -1,3 +1,4 @@
+import { KB_DEFAULTS } from "./kb-defaults.generated";
 import { getStorage, type Storage } from "./storage";
 
 /** The knowledge-base files the tool reads. Only these can be edited from the UI. */
@@ -12,8 +13,13 @@ export function isKbFile(name: string): name is KbFile {
 
 const key = (name: KbFile) => `profile/${name}`;
 
-export async function readKbFile(name: KbFile, storage?: Storage): Promise<string> {
-  return (await (storage ?? (await getStorage())).getText(key(name))) ?? "";
+/**
+ * Saved content wins. If a file was never saved here (e.g. a brand-new hosted site),
+ * start from the version in the repo's profile/ folder that was baked in at build time.
+ */
+export async function readKbFile(name: KbFile, storage?: Storage, defaults: Record<string, string> = KB_DEFAULTS): Promise<string> {
+  const saved = await (storage ?? (await getStorage())).getText(key(name));
+  return saved ?? defaults[name] ?? "";
 }
 
 export async function writeKbFile(name: KbFile, content: string, storage?: Storage): Promise<void> {
@@ -21,9 +27,9 @@ export async function writeKbFile(name: KbFile, content: string, storage?: Stora
   await (storage ?? (await getStorage())).setText(key(name), content);
 }
 
-export async function loadKnowledgeBase(storage?: Storage): Promise<KnowledgeBase> {
+export async function loadKnowledgeBase(storage?: Storage, defaults?: Record<string, string>): Promise<KnowledgeBase> {
   const s = storage ?? (await getStorage());
-  const entries = await Promise.all(KB_FILES.map(async (f) => [f, await readKbFile(f, s)] as const));
+  const entries = await Promise.all(KB_FILES.map(async (f) => [f, await readKbFile(f, s, defaults)] as const));
   return Object.fromEntries(entries) as KnowledgeBase;
 }
 

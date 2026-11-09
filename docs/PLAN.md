@@ -98,7 +98,7 @@ Build it, **but build the idea/draft engine first and treat auto-publishing as o
 
 **Phase 1 — Idea engine (MVP, ~1 week)** ← validation phase
 - Fetch feeds daily, dedupe, score relevance against my pillars.
-- Generate 5 ideas/day: angle, hook, which pillar, why it fits *me*, source link.
+- Generate 5 ideas/day: angle, hook, which pillar, why it fits *me*, source link, and **format** (text post, carousel, or video). At least 1–2 per day should be video ideas.
 - Output a Markdown digest (committed to repo or emailed through a free method).
 - I post manually.
 
@@ -106,6 +106,7 @@ Build it, **but build the idea/draft engine first and treat auto-publishing as o
 - One-click draft per idea: LinkedIn post (hook, body, CTA) and IG caption + slide text.
 - Voice consistency via few-shot examples from `voice.md`.
 - Templated carousel/image generation (HTML → PNG).
+- **Video scripts** for any video idea (see 5b): hook, beats, CTA, shot list, caption.
 
 **Phase 3 — Publishing (~1–2 weeks, optional)**
 - LinkedIn: register app, Share on LinkedIn, OAuth, post text/images; re-auth reminder before the 60-day expiry.
@@ -118,9 +119,25 @@ Build it, **but build the idea/draft engine first and treat auto-publishing as o
 
 ---
 
-## 5b. Video (added later, still undecided)
+## 5b. Video — DECIDED: Option A (editing stays outside the tool)
 
-I'll record videos and need them edited. **Open question:** is that part of the tool or not?
+I'll record videos and edit them myself in a free app (Instagram Edits / CapCut / DaVinci Resolve). **The tool does not edit video.** It handles everything *before* recording (ideas and scripts) and *after* editing (caption and post copy).
+
+### What the tool does for video
+1. **Video ideas** from the same news + knowledge-base pipeline, flagged as video when the topic suits being on camera (opinions, reactions to news, stories, how-tos, behind-the-scenes).
+2. **Scripts**, one per idea, written in my voice from `voice.md`:
+   - **Hook (first 1–3 s)**, with 2–3 alternatives to test
+   - **Beats**: 3–5 short talking points with rough timing for the target length (e.g. 30 s / 60 s / 90 s)
+   - **CTA** (follow, comment prompt, link in bio)
+   - **Shot/B-roll suggestions** and on-screen text callouts, as notes for editing
+   - **Teleprompter version**: plain spoken text, short lines
+3. **Platform versions**: vertical Reel for Instagram, and either the same clip or a talking-head cut for LinkedIn, plus a LinkedIn text post to go with it.
+4. **After recording (optional)**: paste in what I actually said, or an auto-caption export from the editing app, and the tool writes the caption, hashtags and a LinkedIn post. No video file processing.
+5. **Series ideas**: recurring formats (e.g. "weekly news reaction", "myth vs fact") so I can batch-record.
+
+Cost: same free LLM calls as text drafts, so still $0. No video files ever touch the repo.
+
+### Options I considered
 
 ### What "editing" splits into
 | Task | Automatable at $0? | How |
@@ -138,13 +155,11 @@ I'll record videos and need them edited. **Open question:** is that part of the 
 - **CapCut**: free plan exports 1080p clean for normal edits; Pro templates and many AI features are paywalled or watermarked. Pricing and terms keep changing.
 - **DaVinci Resolve (free)**: professional desktop editor with no watermark. Steep learning curve, needs a decent computer.
 
-### Options
 - **A. Keep video out of the tool.** Record → edit in Edits/CapCut → post. Zero build cost. The tool only writes the script/hook beforehand.
 - **B. Thin "video prep" step in the tool (recommended).** Runs **locally**: transcribe → remove silences → captions → reframe → generate caption/post copy. Finish creative edits in a free app if needed.
 - **C. Full automated editor in the tool.** Not recommended: most effort, worst results, and free apps already do it better.
 
-### Recommendation
-**B, but later (after Phase 2).** Meanwhile, the tool should already help *before* recording: turn an idea into a short script with hook, 3 points, and CTA. That's cheap to build and useful whatever you decide about editing.
+Option B (local prep step) can be added later if editing becomes a bottleneck.
 
 ### $0 constraints specific to video
 - **Process on your own computer, not GitHub Actions/the repo.** Video files are large (GitHub blocks files >100 MB; free LFS storage is small). Keep raw footage on your disk or a free cloud drive.
@@ -175,5 +190,5 @@ I'll record videos and need them edited. **Open question:** is that part of the 
 3. Is my Instagram already Creator/Business? (Required for the API.)
 4. Private or public repo? (Public = unlimited Actions minutes but **exposes personal info**; private is recommended.)
 5. Local-only vs. GitHub Actions automation.
-6. Video: A (outside the tool), B (local prep step), or C (full editor)? And where will I record: phone or camera/desktop? Long videos cut into clips, or short ones only?
+6. ~~Video: A, B or C?~~ **Decided: A.** Still open: typical video length (30/60/90 s), and whether I'm comfortable with face-to-camera or prefer voiceover/screen recordings.
 7. If posting Reels via API: switch Instagram to a **Business** account (safer than Creator for API publishing).
